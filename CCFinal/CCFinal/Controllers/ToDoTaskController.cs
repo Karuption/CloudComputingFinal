@@ -22,6 +22,8 @@ public class ToDoTaskController : ControllerBase
 
     // GET: api/ToDoTask
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ToDoTaskDTO>>> GetToDoTask()
     {
         if (_context.ToDoTask == null) return NotFound();
@@ -31,15 +33,16 @@ public class ToDoTaskController : ControllerBase
 
     // GET: api/ToDoTask/5
     [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<ToDoTaskDTO>> GetToDoTask(int id)
     {
-        if (_context.ToDoTask == null) return NotFound();
+        if (_context.ToDoTask == null) 
+            return NotFound();
         var toDoTask = await _context.ToDoTask.FindAsync(id);
 
         if (toDoTask == null)
-        {
             return NotFound();
-        }
 
         return _todoMapper.ToDoTaskToDto(toDoTask);
     }
@@ -47,6 +50,9 @@ public class ToDoTaskController : ControllerBase
     // PUT: api/ToDoTask/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> PutToDoTask(int id, ToDoTaskDTO toDoTaskDTO) {
         
         var toDoTask = _todoMapper.ToDoTaskDtoToModel(toDoTaskDTO);
@@ -80,9 +86,13 @@ public class ToDoTaskController : ControllerBase
     // POST: api/ToDoTask
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ToDoTaskDTO>> PostToDoTask(ToDoTaskDTO toDoTaskDto) {
         
         var toDoTask = (new Mappers.TodoMapper()).ToDoTaskDtoToModel(toDoTaskDto);
+        toDoTask.Created = DateTime.UtcNow;
 
         if (_context.ToDoTask == null) 
             return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
@@ -98,6 +108,8 @@ public class ToDoTaskController : ControllerBase
 
     // DELETE: api/ToDoTask/5
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteToDoTask(int id)
     {
         if (_context.ToDoTask == null)
