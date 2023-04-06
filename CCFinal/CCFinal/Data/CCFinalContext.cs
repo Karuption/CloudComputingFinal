@@ -22,7 +22,7 @@ namespace CCFinal.Data
                 new(){Title = "Your first item!"}
             };
 
-            ToDoTask.AddRangeAsync(seed);
+            await ToDoTask.AddRangeAsync(seed);
         }
     }
 }
