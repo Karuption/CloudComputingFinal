@@ -9,6 +9,7 @@ public class ToDoTask {
     public DateTime Updated { get; set; } = DateTime.UtcNow;
     public TaskType TaskType { get; set; }
     public bool IsCompleted { get; set; }
+    public bool IsFavorite { get; set; }
     public int UserID {get; set; }
     public Guid IntegrationId {get; set; }
 }

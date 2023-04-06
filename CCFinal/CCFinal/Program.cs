@@ -10,7 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // DB Setup
 builder.Services.AddDbContext<CCFinalContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CCFinalContext") ?? throw new InvalidOperationException("Connection string 'CCFinalContext' not found.")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CCFinalContext") 
+                         ?? throw new InvalidOperationException("Connection string 'CCFinalContext' not found.")));
 
 // Add services to the container.
 
@@ -23,6 +24,14 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ITodoMapper, TodoMapper>();
 
 var app = builder.Build();
+
+//DB Setup
+using(var scope = app.Services.CreateScope())
+{
+    var ccFinalContext = scope.ServiceProvider.GetRequiredService<CCFinalContext>();
+    ccFinalContext.Database.EnsureCreated();
+    //.Seed();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {

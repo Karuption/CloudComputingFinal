@@ -15,5 +15,14 @@ namespace CCFinal.Data
         }
 
         public DbSet<CCFinal.Entities.ToDoTask> ToDoTask { get; set; } = default!;
+
+        public async Task Seed() {
+
+            var seed = new List<ToDoTask>() {
+                new(){Title = "Your first item!"}
+            };
+
+            ToDoTask.AddRangeAsync(seed);
+        }
     }
 }
