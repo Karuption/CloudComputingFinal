@@ -1,4 +1,4 @@
-﻿namespace CCFinal.DTO;
+﻿namespace CCFinal.Dtos;
 
 public enum TaskTypeDTO {
     Task,

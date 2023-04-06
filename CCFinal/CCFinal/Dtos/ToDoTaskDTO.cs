@@ -1,4 +1,4 @@
-﻿namespace CCFinal.DTO;
+﻿namespace CCFinal.Dtos;
 
 public class ToDoTaskDTO {
     public int Id { get; set; }
