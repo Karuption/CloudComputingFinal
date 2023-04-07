@@ -1,20 +1,58 @@
 <template>
   <div class="list-wrapper">
     <div class="header">
-      <span class="material-symbols-outlined">
+      <ul
+        v-show="tabs"
+        v-if="tabs"
+        class="tabs"
+      >
+        <li
+          :class="{ 'gray-text': todoList, 'disable-pointer-events': todoList }"
+          @click="showTodo"
+        >
+          Todo
+        </li>
+        <li
+          :class="{ 'gray-text': completedList, 'disable-pointer-events': completedList }"
+          @click="showCompleted"
+        >
+          Completed
+        </li>
+      </ul>
+      <span
+        class="material-symbols-outlined toggle-box"
+      >
         sort
       </span>
-      <h1>Todo</h1>
+
+      <h1 v-if="todoList">
+        Todo
+      </h1>
+      <h1 v-else>
+        Completed
+      </h1>
     </div>
-    <div class="content-wrapper">
+    <div
+      v-if="todoList"
+      class="content-wrapper"
+    >
       <div
         v-for="(task, index) in tasks"
         :key="index"
       >
-        <div class="list-item">
+        <div
+          v-if="task.completed === false"
+          class="list-item"
+        >
           <div class="listed">
-            <span class="material-symbols-outlined smallCircle">
-              circle
+            <span
+              class="material-symbols-outlined smallCircle"
+              :class="{ checked: task.isChecked }"
+              @click="toggleCompletedTask(index)"
+              @mouseenter="task.isChecked = true"
+              @mouseleave="task.isChecked = false"
+            >
+              {{ task.isChecked ? 'check' : 'circle' }}
             </span>
             <div class="rowed-lines">
               <strong><span>{{ task.title }}</span></strong>
@@ -26,7 +64,56 @@
               <div @click="removeTask(index)">
                 <span class="material-symbols-outlined delete">delete</span>
               </div>
-              <div @click="toggleFavorite(index), task.favorite = true">
+              <div @click="toggleFavorite(index)">
+                <span
+                  class="material-symbols-outlined"
+                  :class="['favorite', { active: task.favorite }]"
+                >favorite</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-wrapper">
+        <div @click="addTask">
+          <span class="material-symbols-outlined blue-circle">add</span>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-else
+      class="content-wrapper"
+    >
+      <div
+        v-for="(task, index) in tasks"
+        :key="index"
+      >
+        <div
+          v-if="task.completed === true"
+          class="list-item"
+        >
+          <div class="listed">
+            <span
+              class="material-symbols-outlined smallCircle"
+              :class="{ checked: task.isChecked }"
+              @click="toggleCompletedTask(index)"
+              @mouseenter="task.isChecked = false"
+              @mouseleave="task.isChecked = true"
+            >
+              {{ task.isChecked ? 'check' : 'circle' }}
+            </span>
+            <div class="rowed-lines">
+              <strong><span>{{ task.title }}</span></strong>
+              <div class="full-line">
+                <span>{{ task.date }}</span>
+              </div>
+            </div>
+            <div class="icons">
+              <div @click="removeTask(index)">
+                <span class="material-symbols-outlined delete">delete</span>
+              </div>
+              <div @click="toggleFavorite(index)">
                 <span
                   class="material-symbols-outlined"
                   :class="['favorite', { active: task.favorite }]"
@@ -37,17 +124,14 @@
         </div>
       </div>
     </div>
-    <div class="footer-wrapper">
-      <div @click="addTask">
-        <span class="material-symbols-outlined blue-circle">add</span>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
 /*
     Todo:
+    un-favorite
+    disable pointer on the boxes list selected tab
 */
 
 export default {
@@ -58,25 +142,41 @@ export default {
         {
           title: 'Sample Task 1',
           date: new Date().toISOString().substring(0, 10),
-          favorite: false
+          favorite: false,
+          completed: false,
+          isChecked: false
         },
         {
           title: 'Sample Task 2',
           date: new Date().toISOString().substring(0, 10),
-          favorite: false
+          favorite: false,
+          completed: false,
+          isChecked: false
         },
         {
           title: 'Sample Task 3',
           date: new Date().toISOString().substring(0, 10),
-          favorite: false
+          favorite: false,
+          completed: false,
+          isChecked: false
         },
         {
           title: 'Sample Task 4',
           date: new Date().toISOString().substring(0, 10),
-          favorite: false
+          favorite: false,
+          completed: false,
+          isChecked: false
         }
-      ]
+      ],
+      tabs: true,
+      todoList: true,
+      completedList: false
     }
+  },
+  mounted () {
+    setTimeout(() => {
+      document.querySelector('.header ul').classList.add('show')
+    }, 500)
   },
   methods: {
     addTask () {
@@ -93,10 +193,39 @@ export default {
       this.tasks.splice(index, 1)
     },
     toggleFavorite (index) {
-      this.tasks[index].favorite = !this.tasks[index].favorite
-      if (this.tasks[index].favorite) {
-        const task = this.tasks.splice(index, 1)
-        this.tasks.unshift(task[0])
+      const task = this.tasks[index]
+      const originalIndex = this.tasks.findIndex(t => t === task)
+      task.favorite = !task.favorite
+      if (task.favorite) {
+        // Move the task to the beginning of the list
+        this.tasks.splice(originalIndex, 1)
+        this.tasks.unshift(task)
+      } else {
+        // Move the task back to its original position
+        this.tasks.splice(originalIndex, 1)
+        this.tasks.splice(index, 0, task)
+      }
+    },
+    showTodo () {
+      this.todoList = true
+      this.completedList = false
+      this.animateList()
+    },
+    showCompleted () {
+      this.completedList = true
+      this.todoList = false
+      this.animateList()
+    },
+    toggleCompletedTask (index) {
+      this.tasks[index].completed = !this.tasks[index].completed
+    },
+    animateList () {
+      const list = document.querySelector('.header ul')
+      if (list) {
+        list.classList.remove('show')
+        setTimeout(() => {
+          list.classList.add('show')
+        }, 500)
       }
     }
   }
@@ -131,12 +260,14 @@ body, html {
   background-color: white;
   box-shadow: 25px 40px 28px 0px rgba(156, 156, 156, 0.38);
   margin-top: 50px;
+  min-height: 657px;
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: right;
+  position:relative
 }
 
 .header h1 {
@@ -154,6 +285,15 @@ body, html {
   margin-left: 50px;
   font-size: 40px;
   color: #6798ff;
+  cursor: default;
+}
+
+.header p{
+  cursor: pointer;
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  margin: 0px;
 }
 
 .favorite {
@@ -196,12 +336,15 @@ body, html {
 }
 
 .footer-wrapper {
-  margin-bottom: 50px;
+  margin-bottom: 20px;
   margin-top: 50px;
   display: flex;
   align-items: center;
   justify-content: right;
   margin-right: 50px;
+  position: absolute;
+  bottom: 0;
+  right: 0px;
 }
 
 .footer-wrapper span {
@@ -223,6 +366,11 @@ body, html {
   width: 100%;
 }
 
+.content-wrapper {
+  min-height: 500px;
+  position:relative
+}
+
 .icons {
   display: flex;
   justify-content: right;
@@ -239,6 +387,59 @@ body, html {
 .listed .smallCircle {
   font-size: 15px;
   color: rgb(148, 148, 148);
+  cursor: pointer;
+}
+
+.listed .smallCircle.checked {
+  color: black;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.toggle-box {
+  cursor: pointer;
+}
+
+.gray-text {
+  color: gray;
+  font-weight: bold;
+}
+
+.disable-pointer-events {
+  pointer-events: none;
+}
+
+.tabs {
+  text-transform: none;
+  font-size: 12px;
+  padding: 0px;
+  padding-left: 5px;
+  color: #6798ff;
+  position: absolute;
+  left: 100px;
+}
+
+.tabs li {
+  text-decoration: none;
+  list-style: none;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.tabs li:hover {
+  color: gray;
+}
+
+.header ul li {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.header ul.show li {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 </style>
