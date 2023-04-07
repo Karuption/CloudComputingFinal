@@ -1,128 +1,203 @@
 <template>
-  <div class="list-wrapper">
-    <div class="header">
-      <ul
-        v-show="tabs"
-        v-if="tabs"
-        class="tabs"
-      >
-        <li
-          :class="{ 'gray-text': todoList, 'disable-pointer-events': todoList }"
-          @click="showTodo"
+  <div class="wrapper">
+    <div class="list-wrapper">
+      <div class="header">
+        <ul
+          v-show="tabs"
+          v-if="tabs"
+          class="tabs"
         >
+          <li
+            :class="{ 'gray-text': todoList, 'disable-pointer-events': todoList }"
+            @click="showTodo"
+          >
+            Todo
+          </li>
+          <li
+            :class="{ 'gray-text': completedList, 'disable-pointer-events': completedList }"
+            @click="showCompleted"
+          >
+            Completed
+          </li>
+        </ul>
+        <span
+          class="material-symbols-outlined toggle-box"
+        >
+          sort
+        </span>
+
+        <h1 v-if="todoList">
           Todo
-        </li>
-        <li
-          :class="{ 'gray-text': completedList, 'disable-pointer-events': completedList }"
-          @click="showCompleted"
-        >
+        </h1>
+        <h1 v-else>
           Completed
-        </li>
-      </ul>
-      <span
-        class="material-symbols-outlined toggle-box"
-      >
-        sort
-      </span>
-
-      <h1 v-if="todoList">
-        Todo
-      </h1>
-      <h1 v-else>
-        Completed
-      </h1>
-    </div>
-    <div
-      v-if="todoList"
-      class="content-wrapper"
-    >
-      <div
-        v-for="(task, index) in tasks"
-        :key="index"
-      >
+        </h1>
+      </div>
+      <div v-if="todoList">
         <div
-          v-if="task.completed === false"
-          class="list-item"
+          class="content-wrapper"
         >
-          <div class="listed">
-            <span
-              class="material-symbols-outlined smallCircle"
-              :class="{ checked: task.isChecked }"
-              @click="toggleCompletedTask(index)"
-              @mouseenter="task.isChecked = true"
-              @mouseleave="task.isChecked = false"
+          <div
+            v-for="(task, index) in tasks"
+            :key="index"
+          >
+            <div
+              v-if="task.isCompleted === false"
+              class="list-item"
             >
-              {{ task.isChecked ? 'check' : 'circle' }}
-            </span>
-            <div class="rowed-lines">
-              <strong><span>{{ task.title }}</span></strong>
-              <div class="full-line">
-                <span>{{ task.date }}</span>
+              <div class="listed">
+                <span
+                  class="material-symbols-outlined smallCircle"
+                  :class="{ checked: task.isChecked }"
+                  @click="toggleCompletedTask(index)"
+                  @mouseenter="task.isChecked = true"
+                  @mouseleave="task.isChecked = false"
+                >
+                  {{ task.isChecked ? 'check' : 'circle' }}
+                </span>
+                <div
+                  v-if="fullDisplay[index] !== false"
+                  class="rowed-lines"
+                  @click="showAllItemContents(index)"
+                >
+                  <strong v-if="fullDisplay[index] !== true"><span>{{ task.title }}</span></strong>
+                  <div class="full-line">
+                    <strong><span v-if="fullDisplay[index]">{{ task.title }}</span></strong>
+                    <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ task.created }}</span>
+                    <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ task.dueDate }}</span>
+                    <span v-if="fullDisplay[index] !==true">Due Date: {{ task.dueDate }}</span>
+                    <span v-if="fullDisplay[index]"><br><strong>Description: </strong>{{ task.description }}</span>
+                  <!--
+                  <span v-if="fullDisplay[index]"><br><strong>Updated: </strong>{{ task.updated }}</span>
+                  -->
+                  </div>
+                </div>
+                <div
+                  v-if="fullDisplay[index] !== true"
+                  class="icons"
+                >
+                  <div @click="removeTask(index)">
+                    <span class="material-symbols-outlined delete">delete</span>
+                  </div>
+                  <div @click="toggleFavorite(index)">
+                    <span
+                      class="material-symbols-outlined"
+                      :class="['favorite', { active: task.isFavorite }]"
+                    >favorite</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="icons">
-              <div @click="removeTask(index)">
-                <span class="material-symbols-outlined delete">delete</span>
+          </div>
+        </div>
+        <div class="footer-wrapper">
+          <div @click="toggleFormInput">
+            <span class="material-symbols-outlined blue-circle">add</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-else
+        class="completed-wrapper"
+      >
+        <div
+          v-for="(task, index) in tasks"
+          :key="index"
+        >
+          <div
+            v-if="task.isCompleted === true"
+            class="list-item"
+          >
+            <div class="listed">
+              <span
+                class="material-symbols-outlined smallCircle"
+                :class="{ checked: task.isChecked }"
+                @click="toggleCompletedTask(index)"
+                @mouseenter="task.isChecked = false"
+                @mouseleave="task.isChecked = true"
+              >
+                {{ task.isChecked ? 'check' : 'circle' }}
+              </span>
+              <div
+                v-if="fullDisplay[index] !== false"
+                class="rowed-lines"
+                @click="showAllItemContents(index)"
+              >
+                <strong v-if="fullDisplay[index] !== true"><span>{{ task.title }}</span></strong>
+                <div class="full-line">
+                  <strong><span v-if="fullDisplay[index]">{{ task.title }}</span></strong>
+                  <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ task.created }}</span>
+                  <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ task.dueDate }}</span>
+                  <span v-if="fullDisplay[index]"><br><strong>Description: </strong>{{ task.description }}</span>
+                <!--
+                  <span v-if="fullDisplay[index]"><br><strong>Updated: </strong>{{ task.updated }}</span>
+                  -->
+                </div>
               </div>
-              <div @click="toggleFavorite(index)">
-                <span
-                  class="material-symbols-outlined"
-                  :class="['favorite', { active: task.favorite }]"
-                >favorite</span>
+              <div
+                v-if="fullDisplay[index] !== true"
+                class="icons"
+              >
+                <div @click="removeTask(index)">
+                  <span class="material-symbols-outlined delete">delete</span>
+                </div>
+                <div @click="toggleFavorite(index)">
+                  <span
+                    class="material-symbols-outlined"
+                    :class="['favorite', { active: task.isFavorite }]"
+                  >favorite</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="footer-wrapper">
-        <div @click="addTask">
-          <span class="material-symbols-outlined blue-circle">add</span>
-        </div>
-      </div>
     </div>
-
     <div
-      v-else
-      class="content-wrapper"
+      v-if="addItem==true"
+      class="form-wrapper"
     >
-      <div
-        v-for="(task, index) in tasks"
-        :key="index"
-      >
+      <form @submit.prevent="submitForm">
         <div
-          v-if="task.completed === true"
-          class="list-item"
+          class="close-form"
+          @click="toggleFormInput"
         >
-          <div class="listed">
-            <span
-              class="material-symbols-outlined smallCircle"
-              :class="{ checked: task.isChecked }"
-              @click="toggleCompletedTask(index)"
-              @mouseenter="task.isChecked = false"
-              @mouseleave="task.isChecked = true"
-            >
-              {{ task.isChecked ? 'check' : 'circle' }}
-            </span>
-            <div class="rowed-lines">
-              <strong><span>{{ task.title }}</span></strong>
-              <div class="full-line">
-                <span>{{ task.date }}</span>
-              </div>
-            </div>
-            <div class="icons">
-              <div @click="removeTask(index)">
-                <span class="material-symbols-outlined delete">delete</span>
-              </div>
-              <div @click="toggleFavorite(index)">
-                <span
-                  class="material-symbols-outlined"
-                  :class="['favorite', { active: task.favorite }]"
-                >favorite</span>
-              </div>
-            </div>
-          </div>
+          <span class="material-symbols-outlined">
+            close
+          </span>
         </div>
-      </div>
+        <label for="title">Title</label>
+        <input
+          id="title"
+          v-model="newTask.title"
+          type="text"
+          required
+        >
+        <br>
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          v-model="newTask.description"
+        />
+        <br>
+        <label for="dueDate">Due Date</label>
+        <input
+          id="dueDate"
+          v-model="newTask.dueDate"
+          type="date"
+        >
+        <br>
+        <div class="submit-section">
+          <button type="submit">
+            <div
+              class="form-submit"
+            >
+              <span class="material-symbols-outlined blue-circle">add</span>
+            </div>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -130,81 +205,72 @@
 <script>
 /*
     Todo:
-    un-favorite
-    disable pointer on the boxes list selected tab
+    add edit button on full view
 */
 
 export default {
   data  () {
     return {
-      newTask: '',
+      newTask: {
+        title: '',
+        description: '',
+        dueDate: ''
+      },
       tasks: [
         {
+          id: 1,
           title: 'Sample Task 1',
-          date: new Date().toISOString().substring(0, 10),
-          favorite: false,
-          completed: false,
-          isChecked: false
-        },
-        {
-          title: 'Sample Task 2',
-          date: new Date().toISOString().substring(0, 10),
-          favorite: false,
-          completed: false,
-          isChecked: false
-        },
-        {
-          title: 'Sample Task 3',
-          date: new Date().toISOString().substring(0, 10),
-          favorite: false,
-          completed: false,
-          isChecked: false
-        },
-        {
-          title: 'Sample Task 4',
-          date: new Date().toISOString().substring(0, 10),
-          favorite: false,
-          completed: false,
+          description: 'Dtricies tristique nulla aliquet enim. Sed ullamcorper morbi tincidunt ornare massa eget egestas purus. Condimentum lacinia quis vel eros donec ac odio tempor. Mattis pellentesque id nibh tortor. Eu sem integer vitae justo eget magna. Quisque egestas diam in arcu cursus euismod quis viverra. Nibh tortor id aliquet lectus proin nibh nisl condimentum id. Morbi tristique senectus et netus et. Cras pulvinar mattis nunc sed blandit libero volutpat sed cra.',
+          created: new Date().toISOString().substring(0, 10),
+          dueDate: new Date().toISOString().substring(0, 10),
+          updated: '',
+          taskType: 0,
+          isFavorite: false,
+          isCompleted: false,
           isChecked: false
         }
       ],
       tabs: true,
       todoList: true,
-      completedList: false
+      completedList: false,
+      addItem: false,
+      fullDisplay: []
     }
   },
   mounted () {
     setTimeout(() => {
       document.querySelector('.header ul').classList.add('show')
-    }, 500)
+    }, 200)
   },
   methods: {
-    addTask () {
-      if (this.newTask.trim() !== '') {
-        this.tasks.unshift({
-          title: this.newTask,
-          date: new Date().toISOString().substring(0, 10),
-          favorite: false
-        })
-        this.newTask = ''
-      }
+    submitForm () {
+      // Set created date to current date
+      this.newTask.created = new Date().toISOString().substring(0, 10)
+      // Add new task to tasks array
+      this.tasks.unshift({
+        id: this.tasks.length + 1,
+        title: this.newTask.title,
+        description: this.newTask.description,
+        created: this.newTask.created,
+        dueDate: this.newTask.dueDate,
+        updated: '',
+        taskType: 0,
+        isFavorite: false,
+        isCompleted: false,
+        isChecked: false
+      })
+      // Reset form fields
+      this.newTask.title = ''
+      this.newTask.description = ''
+      this.newTask.dueDate = ''
+      this.addItem = false
     },
     removeTask (index) {
       this.tasks.splice(index, 1)
     },
     toggleFavorite (index) {
       const task = this.tasks[index]
-      const originalIndex = this.tasks.findIndex(t => t === task)
-      task.favorite = !task.favorite
-      if (task.favorite) {
-        // Move the task to the beginning of the list
-        this.tasks.splice(originalIndex, 1)
-        this.tasks.unshift(task)
-      } else {
-        // Move the task back to its original position
-        this.tasks.splice(originalIndex, 1)
-        this.tasks.splice(index, 0, task)
-      }
+      task.isFavorite = !task.isFavorite
     },
     showTodo () {
       this.todoList = true
@@ -217,7 +283,7 @@ export default {
       this.animateList()
     },
     toggleCompletedTask (index) {
-      this.tasks[index].completed = !this.tasks[index].completed
+      this.tasks[index].isCompleted = !this.tasks[index].isCompleted
     },
     animateList () {
       const list = document.querySelector('.header ul')
@@ -225,8 +291,18 @@ export default {
         list.classList.remove('show')
         setTimeout(() => {
           list.classList.add('show')
-        }, 500)
+        }, 200)
       }
+    },
+    showAllItemContents (index) {
+      if (this.fullDisplay[index] === true) {
+        this.fullDisplay[index] = ''
+      } else {
+        this.fullDisplay[index] = true
+      }
+    },
+    toggleFormInput () {
+      this.addItem = !this.addItem
     }
   }
 }
@@ -259,7 +335,7 @@ body, html {
   border-radius: 10px;
   background-color: white;
   box-shadow: 25px 40px 28px 0px rgba(156, 156, 156, 0.38);
-  margin-top: 50px;
+  margin-top: 60px;
   min-height: 657px;
 }
 
@@ -317,6 +393,12 @@ body, html {
 .rowed-lines {
   width: 100%;
   margin-left: 20px;
+  cursor: pointer;
+}
+
+.rowed-lines:hover {
+  opacity: .9;
+ /* color: #6798ff; */
 }
 
 .list-item {
@@ -329,22 +411,18 @@ body, html {
   height: auto;
   border: 0px solid black;
   margin-bottom: 20px;
-  margin-left: 50px;
-  margin-right: 50px;
+  margin-left: 35px;
+  margin-right: 25px;
   box-shadow: 0px 2px 4px 0px rgba(156, 156, 156, 0.38);
   border: 1px solid rgba(156, 156, 156, 0.38);
 }
 
 .footer-wrapper {
-  margin-bottom: 20px;
-  margin-top: 50px;
   display: flex;
-  align-items: center;
   justify-content: right;
-  margin-right: 50px;
-  position: absolute;
-  bottom: 0;
-  right: 0px;
+  margin-bottom: 50px;
+  margin-top: 50px;
+  margin-right: 65px;
 }
 
 .footer-wrapper span {
@@ -357,9 +435,28 @@ body, html {
   box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38);
 }
 
+.form-submit span {
+  cursor: pointer;
+  background-color: #6798ff;
+  border-radius: 50%;
+  font-size: 30px;
+  padding: 10px;
+  color: white;
+  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38);
+}
+
+.form-submit span:hover {
+  background-color: #83aaff;
+}
+
+.footer-wrapper span:hover {
+  background-color: #83aaff;
+}
+
 .full-line {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  width: 100%;
 }
 
 .full-line span {
@@ -367,21 +464,61 @@ body, html {
 }
 
 .content-wrapper {
-  min-height: 500px;
-  position:relative
+  min-height: 480px;
+  max-height: 300px;
+  overflow-y: scroll;
+  position:relative;
+  margin: 20px;
+}
+
+.completed-wrapper {
+  min-height: 530px;
+  max-height: 300px;
+  overflow-y: scroll;
+  position:relative;
+  margin: 20px;
+  margin-bottom: 100px;
+}
+
+.content-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background-color: #F5F5F5;
+  border-radius: 10px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #999999;
+}
+
+.completed-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.completed-wrapper::-webkit-scrollbar-thumb {
+  background-color: #F5F5F5;
+  border-radius: 10px;
+}
+
+.completed-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #999999;
 }
 
 .icons {
   display: flex;
   justify-content: right;
   align-items: right;
-  width: 100%;
+  width: auto;
+  margin-left: 15px;
 }
 
 .listed {
   display: flex;
   flex-direction: row;
   align-items: center;
+
 }
 
 .listed .smallCircle {
@@ -433,13 +570,112 @@ body, html {
 
 .header ul li {
   opacity: 0;
-  transform: translateX(-30px);
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  transform: translateX(-20px);
+  transition: all 0.3s;
 }
 
 .header ul.show li {
   opacity: 1;
   transform: translateX(0);
+}
+
+.wrapper {
+  position: relative;
+}
+
+.form-wrapper {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  top: 200px;
+
+}
+
+.form-wrapper form {
+  position: relative;
+  z-index:1000;
+  margin: 0 auto;
+  box-shadow: 0px 2px 4px 0px rgba(156, 156, 156, 0.38);
+  border: 1px solid rgba(156, 156, 156, 0.38);
+  border-radius: 10px;
+  background-color: white;
+  padding: 20px;
+  padding-left: 100px;
+  padding-right: 100px;
+  width: 400px;
+  height: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: left;
+  flex-direction: column;
+  font-weight: bold;
+}
+
+.form-wrapper form input, textarea {
+  box-shadow: 0px 2px 4px 0px rgba(156, 156, 156, 0.38);
+  border: 1px solid rgba(156, 156, 156, 0.38);
+}
+
+form label {
+  margin-bottom: 5px;
+}
+
+textarea:focus {
+  outline: 2px solid #6798ff;
+}
+
+input {
+  height: 30px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+textarea {
+  height: 30px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+input:focus {
+  outline: 2px solid #6798ff;
+}
+
+form button {
+  border: transparent;
+  background-color: white;
+}
+
+form button {
+  width: 50px;
+  height: 50px;
+  padding: 0px;
+}
+
+.submit-section {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.form-submit {
+  width: 50px;
+  height: 50px;
+}
+
+.close-form {
+  display: flex;
+  justify-content: right;
+  height: auto;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.close-form span{
+  cursor: pointer;
+  background-color: #6797ff00;
+  font-size: 30px;
+  color: rgb(0, 0, 0);
 }
 
 </style>
