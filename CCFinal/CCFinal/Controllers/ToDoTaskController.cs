@@ -28,7 +28,7 @@ public class ToDoTaskController : ControllerBase
     {
         if (_context.ToDoTask == null) return NotFound();
         
-        return _context.ToDoTask.Select(x=>_todoMapper.ToDoTaskToDto(x)).ToList();
+        return _context.ToDoTask.Select(x=>_todoMapper.TodoTaskToDto(x)).ToList();
     }
 
     // GET: api/ToDoTask/5
@@ -44,7 +44,7 @@ public class ToDoTaskController : ControllerBase
         if (toDoTask == null)
             return NotFound();
 
-        return _todoMapper.ToDoTaskToDto(toDoTask);
+        return _todoMapper.TodoTaskToDto(toDoTask);
     }
 
     // PUT: api/ToDoTask/5
@@ -55,7 +55,7 @@ public class ToDoTaskController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> PutToDoTask(int id, ToDoTaskDTO toDoTaskDTO) {
         
-        var toDoTask = _todoMapper.ToDoTaskDtoToModel(toDoTaskDTO);
+        var toDoTask = _todoMapper.TodoTaskDtoToModel(toDoTaskDTO);
 
         if (id != toDoTask.Id)
         {
@@ -91,7 +91,7 @@ public class ToDoTaskController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ToDoTaskDTO>> PostToDoTask(ToDoTaskDTO toDoTaskDto) {
         
-        var toDoTask = (new Mappers.TodoMapper()).ToDoTaskDtoToModel(toDoTaskDto);
+        var toDoTask = (new Mappers.TodoMapper()).TodoTaskDtoToModel(toDoTaskDto);
         toDoTask.Created = DateTime.UtcNow;
 
         if (_context.ToDoTask == null) 
@@ -100,7 +100,7 @@ public class ToDoTaskController : ControllerBase
         _context.ToDoTask.Add(toDoTask);
         await _context.SaveChangesAsync();
 
-        toDoTaskDto = _todoMapper.ToDoTaskToDto(toDoTask);
+        toDoTaskDto = _todoMapper.TodoTaskToDto(toDoTask);
         
 
         return CreatedAtAction("GetToDoTask", new { id = toDoTaskDto.Id }, toDoTaskDto);

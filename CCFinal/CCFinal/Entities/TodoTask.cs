@@ -16,6 +16,7 @@ public class ToDoTask {
     public bool IsFavorite { get; set; }
     [Key]
     public int UserID {get; set; }
+
     [Key]
-    public Guid IntegrationId {get; set; }
+    public string? IntegrationId { get; set; }
 }

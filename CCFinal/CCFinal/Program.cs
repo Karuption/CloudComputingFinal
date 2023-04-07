@@ -1,11 +1,6 @@
-using CCFinal;using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using CCFinal.Data;
 using CCFinal.Mappers;
-using Riok.Mapperly.Abstractions;
-using TodoMapper = CCFinal.Mappers.TodoMapper;
-
-
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +16,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//DI Setup
+// DI Setup
 builder.Services.AddSingleton<ITodoMapper, TodoMapper>();
 
 var app = builder.Build();
