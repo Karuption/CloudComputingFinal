@@ -19,7 +19,19 @@ builder.Services.AddSwaggerGen();
 // DI Setup
 builder.Services.AddSingleton<ITodoMapper, TodoMapper>();
 
+builder.Services.AddCors(option => {
+    option.AddPolicy("final", policy => {
+        policy.AllowAnyHeader();
+        policy.AllowAnyMethod();
+        policy.AllowAnyOrigin();
+        policy.DisallowCredentials();
+        policy.SetIsOriginAllowed(_ => true);
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("final");
 
 //DB Setup
 using(var scope = app.Services.CreateScope())
