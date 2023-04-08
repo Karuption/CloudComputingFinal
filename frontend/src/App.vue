@@ -241,7 +241,6 @@ export default {
     axios.get('http://localhost:5000/api/ToDoTask')
       .then(response => {
         this.tasks = response.data
-        console.log(this.tasks)
       })
       .catch(error => {
         console.log(error)
@@ -747,7 +746,7 @@ form button {
 
 .empty-wrapper {
   position: absolute;
-  top: 25px;
+  top: 0px;
   height: 500px;
   pointer-events: none;
 }
@@ -761,7 +760,7 @@ form button {
   margin: 0px;
   position: relative;
   z-index:1000;
-  bottom: 30px;
+  bottom: 70px;
   color: rgb(148, 148, 148);
 }
 
