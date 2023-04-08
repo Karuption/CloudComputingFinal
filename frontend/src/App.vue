@@ -33,6 +33,15 @@
           Completed
         </h1>
       </div>
+      <div
+        v-if="tasks.length === 0"
+        class="empty"
+      >
+        <div class="empty-wrapper">
+          <img src="/images/empty.png">
+          <h4>Add a task to get started</h4>
+        </div>
+      </div>
       <div v-if="todoList">
         <div
           class="content-wrapper"
@@ -48,12 +57,12 @@
               <div class="listed">
                 <span
                   class="material-symbols-outlined smallCircle"
-                  :class="{ checked: task.isChecked }"
+                  :class="{ checked: isChecked[index] }"
                   @click="toggleCompletedTask(index)"
-                  @mouseenter="task.isChecked = true"
-                  @mouseleave="task.isChecked = false"
+                  @mouseenter="isChecked[index] = true"
+                  @mouseleave="isChecked[index] = false"
                 >
-                  {{ task.isChecked ? 'check' : 'circle' }}
+                  {{ isChecked[index] ? 'check' : 'circle' }}
                 </span>
                 <div
                   v-if="fullDisplay[index] !== false"
@@ -63,9 +72,9 @@
                   <strong v-if="fullDisplay[index] !== true"><span>{{ task.title }}</span></strong>
                   <div class="full-line">
                     <strong><span v-if="fullDisplay[index]">{{ task.title }}</span></strong>
-                    <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ task.created }}</span>
-                    <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ task.dueDate }}</span>
-                    <span v-if="fullDisplay[index] !==true">Due Date: {{ task.dueDate }}</span>
+                    <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ convertToRegularTime(task.created) }}</span>
+                    <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ convertToRegularTime(task.dueDate) }}</span>
+                    <span v-if="fullDisplay[index] !==true && task.dueDate != null">Due Date: {{ formatDate(task.dueDate) }}</span>
                     <span v-if="fullDisplay[index]"><br><strong>Description: </strong>{{ task.description }}</span>
                   <!--
                   <span v-if="fullDisplay[index]"><br><strong>Updated: </strong>{{ task.updated }}</span>
@@ -111,13 +120,13 @@
           >
             <div class="listed">
               <span
-                class="material-symbols-outlined smallCircle"
+                class="material-symbols-outlined checkmark"
                 :class="{ checked: task.isChecked }"
                 @click="toggleCompletedTask(index)"
-                @mouseenter="task.isChecked = false"
-                @mouseleave="task.isChecked = true"
+                @mouseenter="isChecked[index] = true"
+                @mouseleave="isChecked[index] = false"
               >
-                {{ task.isChecked ? 'check' : 'circle' }}
+                {{ isChecked[index] ? 'circle' : 'check' }}
               </span>
               <div
                 v-if="fullDisplay[index] !== false"
@@ -127,8 +136,8 @@
                 <strong v-if="fullDisplay[index] !== true"><span>{{ task.title }}</span></strong>
                 <div class="full-line">
                   <strong><span v-if="fullDisplay[index]">{{ task.title }}</span></strong>
-                  <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ task.created }}</span>
-                  <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ task.dueDate }}</span>
+                  <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ convertToRegularTime(task.created) }}</span>
+                  <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ convertToRegularTime(task.dueDate) }}</span>
                   <span v-if="fullDisplay[index]"><br><strong>Description: </strong>{{ task.description }}</span>
                 <!--
                   <span v-if="fullDisplay[index]"><br><strong>Updated: </strong>{{ task.updated }}</span>
@@ -158,7 +167,7 @@
       v-if="addItem==true"
       class="form-wrapper"
     >
-      <form @submit.prevent="submitForm">
+      <form @submit.prevent="submitForm()">
         <div
           class="close-form"
           @click="toggleFormInput"
@@ -185,7 +194,7 @@
         <input
           id="dueDate"
           v-model="newTask.dueDate"
-          type="date"
+          type="datetime-local"
         >
         <br>
         <div class="submit-section">
@@ -203,8 +212,10 @@
 </template>
 
 <script>
+import axios from 'axios'
 /*
     Todo:
+    add empty task message
     add edit button on full view
 */
 
@@ -214,63 +225,74 @@ export default {
       newTask: {
         title: '',
         description: '',
+        created: '',
         dueDate: ''
       },
-      tasks: [
-        {
-          id: 1,
-          title: 'Sample Task 1',
-          description: 'Dtricies tristique nulla aliquet enim. Sed ullamcorper morbi tincidunt ornare massa eget egestas purus. Condimentum lacinia quis vel eros donec ac odio tempor. Mattis pellentesque id nibh tortor. Eu sem integer vitae justo eget magna. Quisque egestas diam in arcu cursus euismod quis viverra. Nibh tortor id aliquet lectus proin nibh nisl condimentum id. Morbi tristique senectus et netus et. Cras pulvinar mattis nunc sed blandit libero volutpat sed cra.',
-          created: new Date().toISOString().substring(0, 10),
-          dueDate: new Date().toISOString().substring(0, 10),
-          updated: '',
-          taskType: 0,
-          isFavorite: false,
-          isCompleted: false,
-          isChecked: false
-        }
-      ],
+      tasks: [],
       tabs: true,
       todoList: true,
       completedList: false,
       addItem: false,
-      fullDisplay: []
+      fullDisplay: [],
+      isChecked: []
     }
   },
   mounted () {
+    axios.get('http://localhost:5000/api/ToDoTask')
+      .then(response => {
+        this.tasks = response.data
+        console.log(this.tasks)
+      })
+      .catch(error => {
+        console.log(error)
+      })
     setTimeout(() => {
       document.querySelector('.header ul').classList.add('show')
     }, 200)
   },
   methods: {
     submitForm () {
-      // Set created date to current date
-      this.newTask.created = new Date().toISOString().substring(0, 10)
-      // Add new task to tasks array
-      this.tasks.unshift({
-        id: this.tasks.length + 1,
-        title: this.newTask.title,
-        description: this.newTask.description,
-        created: this.newTask.created,
-        dueDate: this.newTask.dueDate,
-        updated: '',
-        taskType: 0,
-        isFavorite: false,
-        isCompleted: false,
-        isChecked: false
-      })
-      // Reset form fields
-      this.newTask.title = ''
-      this.newTask.description = ''
-      this.newTask.dueDate = ''
-      this.addItem = false
+      if (!this.newTask.dueDate) {
+        this.newTask.dueDate = null
+      }
+      axios.post('http://localhost:5000/api/ToDoTask', this.newTask)
+        .then(response => {
+          console.log(response.data)
+          this.tasks.push(response.data)
+          // Reset form fields
+          this.newTask = {
+            title: '',
+            description: '',
+            dueDate: '',
+            created: ''
+          }
+        })
+        .catch(error => {
+          console.log(error)
+        })
+
+      this.toggleFormInput()
     },
     removeTask (index) {
-      this.tasks.splice(index, 1)
+      const taskId = this.tasks[index].id
+      axios.delete(`http://localhost:5000/api/ToDoTask/${taskId}`)
+        .then(response => {
+          this.tasks.splice(index, 1)
+        })
+        .catch(error => {
+          console.log(error)
+        })
     },
     toggleFavorite (index) {
       const task = this.tasks[index]
       task.isFavorite = !task.isFavorite
+      const taskId = task.id
+      axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task)
+        .then(response => {
+        })
+        .catch(error => {
+          console.log(error)
+        })
     },
     showTodo () {
       this.todoList = true
@@ -283,7 +305,16 @@ export default {
       this.animateList()
     },
     toggleCompletedTask (index) {
-      this.tasks[index].isCompleted = !this.tasks[index].isCompleted
+      this.isChecked[index] = !this.isChecked[index]
+      const task = this.tasks[index]
+      task.isCompleted = !task.isCompleted
+      const taskId = task.id
+      axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task)
+        .then(response => {
+        })
+        .catch(error => {
+          console.log(error)
+        })
     },
     animateList () {
       const list = document.querySelector('.header ul')
@@ -303,6 +334,21 @@ export default {
     },
     toggleFormInput () {
       this.addItem = !this.addItem
+    },
+    formatDate (date) {
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' }
+      return new Date(date).toLocaleDateString('en-US', options)
+    },
+    convertToRegularTime (dateString) {
+      const date = new Date(dateString)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hour = date.getHours() > 12 ? date.getHours() - 12 : date.getHours()
+      const minute = String(date.getMinutes()).padStart(2, '0')
+      const ampm = date.getHours() >= 12 ? 'pm' : 'am'
+      const formattedTime = `${month}/${day}/${year} at ${hour}:${minute} ${ampm}`
+      return formattedTime
     }
   }
 }
@@ -527,6 +573,26 @@ body, html {
   cursor: pointer;
 }
 
+.checkmark {
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.checkmark.checked{
+  color: black;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.checkmark:hover {
+  font-size: 15px;
+  color: rgb(148, 148, 148);
+  cursor: pointer;
+  font-weight: normal;
+}
+
 .listed .smallCircle.checked {
   color: black;
   font-size: 15px;
@@ -602,6 +668,7 @@ body, html {
   padding: 20px;
   padding-left: 100px;
   padding-right: 100px;
+  padding-top: 50px;
   width: 400px;
   height: 350px;
   display: flex;
@@ -676,6 +743,30 @@ form button {
   background-color: #6797ff00;
   font-size: 30px;
   color: rgb(0, 0, 0);
+}
+
+.empty-wrapper {
+  position: absolute;
+  top: 25px;
+  height: 500px;
+  pointer-events: none;
+}
+
+.empty-wrapper img{
+  max-width: 100%;
+}
+
+.empty-wrapper h4 {
+  text-align: center;
+  margin: 0px;
+  position: relative;
+  z-index:1000;
+  bottom: 30px;
+  color: rgb(148, 148, 148);
+}
+
+.empty {
+  position: relative;
 }
 
 </style>
