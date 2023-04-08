@@ -1,6 +1,5 @@
 ﻿using CCFinal.Data;
 using CCFinal.Dtos;
-using CCFinal.Entities;
 using CCFinal.Mappers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -54,15 +53,18 @@ public class ToDoTaskController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> PutToDoTask(int id, ToDoTaskDTO toDoTaskDTO) {
-        
-        var toDoTask = _todoMapper.TodoTaskDtoToModel(toDoTaskDTO);
+        if (toDoTaskDTO.Id == 0)
+            toDoTaskDTO.Id = id;
+        if (id != toDoTaskDTO.Id) return BadRequest();
 
-        if (id != toDoTask.Id)
-        {
-            return BadRequest();
-        }
+        var dbTask = await _context.ToDoTask.FindAsync(id);
+        if (dbTask == null)
+            return NotFound();
 
-        _context.Entry(toDoTask).State = EntityState.Modified;
+        //Making sure that the Created and updated get transferred correctly
+        toDoTaskDTO.Created = dbTask.Created;
+        toDoTaskDTO.Updated = DateTime.UtcNow;
+        _todoMapper.TodoTaskDtoToModel(toDoTaskDTO, dbTask);
 
         try
         {
@@ -90,9 +92,9 @@ public class ToDoTaskController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ToDoTaskDTO>> PostToDoTask(ToDoTaskDTO toDoTaskDto) {
-        
-        var toDoTask = (new Mappers.TodoMapper()).TodoTaskDtoToModel(toDoTaskDto);
+        var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
         toDoTask.Created = DateTime.UtcNow;
+        toDoTask.Updated = DateTime.UtcNow;
 
         if (_context.ToDoTask == null) 
             return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
@@ -100,10 +102,10 @@ public class ToDoTaskController : ControllerBase
         _context.ToDoTask.Add(toDoTask);
         await _context.SaveChangesAsync();
 
-        toDoTaskDto = _todoMapper.TodoTaskToDto(toDoTask);
-        
+        var toDoTaskReturn = _todoMapper.TodoTaskToDto(toDoTask);
 
-        return CreatedAtAction("GetToDoTask", new { id = toDoTaskDto.Id }, toDoTaskDto);
+
+        return CreatedAtAction("GetToDoTask", new { id = toDoTaskReturn.Id }, toDoTaskReturn);
     }
 
     // DELETE: api/ToDoTask/5

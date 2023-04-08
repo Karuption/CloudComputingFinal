@@ -50,16 +50,20 @@ public class ToDoIntegrationController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> PutToDoTask(string id, ToDoTaskIntegrationDto toDoTaskDTO) {
-        var toDoTask = _todoMapper.TodoTaskDtoToModel(toDoTaskDTO);
-
-        if (id != toDoTask.IntegrationId)
+        if (toDoTaskDTO.IntegrationId == default)
+            toDoTaskDTO.IntegrationId = id;
+        if (id != toDoTaskDTO.IntegrationId)
             return BadRequest();
-
         var task = _context.ToDoTask.FirstOrDefault(x => x.IntegrationId == id);
 
-        toDoTask.Id = task.Id;
+        if (task is null)
+            return NotFound();
 
-        _context.Entry(toDoTask).State = EntityState.Modified;
+        toDoTaskDTO.Id = task.Id;
+        toDoTaskDTO.Created = task.Created;
+        toDoTaskDTO.Updated = DateTime.UtcNow;
+
+        _todoMapper.TodoTaskDtoToModel(toDoTaskDTO, task);
 
         try {
             await _context.SaveChangesAsync();
@@ -82,6 +86,7 @@ public class ToDoIntegrationController : ControllerBase {
     public async Task<ActionResult<ToDoTaskDTO>> PostToDoTask(ToDoTaskDTO toDoTaskDto) {
         var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
         toDoTask.Created = DateTime.UtcNow;
+        toDoTask.Updated = DateTime.UtcNow;
 
         if (_context.ToDoTask == null)
             return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
@@ -89,7 +94,7 @@ public class ToDoIntegrationController : ControllerBase {
         _context.ToDoTask.Add(toDoTask);
         await _context.SaveChangesAsync();
 
-        toDoTaskDto = _todoMapper.TodoTaskToDto(toDoTask);
+        _todoMapper.TodoTaskToDto(toDoTask, toDoTaskDto);
 
 
         return CreatedAtAction("GetToDoTask", new { id = toDoTaskDto.Id }, toDoTaskDto);

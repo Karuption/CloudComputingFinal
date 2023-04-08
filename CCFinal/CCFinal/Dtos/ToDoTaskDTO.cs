@@ -4,7 +4,7 @@ public class ToDoTaskDTO {
     public int Id { get; set; }
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
-    public DateTime Created { get; }
+    public DateTime Created { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime Updated { get; set; } = DateTime.UtcNow;
     public TaskTypeDTO TaskType { get; set; }
