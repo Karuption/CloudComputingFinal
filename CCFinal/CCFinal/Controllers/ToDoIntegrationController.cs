@@ -84,12 +84,13 @@ public class ToDoIntegrationController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ToDoTaskDTO>> PostToDoTask(ToDoTaskDTO toDoTaskDto) {
-        var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
-        toDoTask.Created = DateTime.UtcNow;
-        toDoTask.Updated = DateTime.UtcNow;
-
         if (_context.ToDoTask == null)
             return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
+
+        var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
+        toDoTask.Id = default;
+        toDoTask.Created = DateTime.UtcNow;
+        toDoTask.Updated = DateTime.UtcNow;
 
         _context.ToDoTask.Add(toDoTask);
         await _context.SaveChangesAsync();

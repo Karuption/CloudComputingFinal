@@ -53,9 +53,10 @@ public class ToDoTaskController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> PutToDoTask(int id, ToDoTaskDTO toDoTaskDTO) {
-        if (toDoTaskDTO.Id == 0)
+        if (toDoTaskDTO.Id == default)
             toDoTaskDTO.Id = id;
-        if (id != toDoTaskDTO.Id) return BadRequest();
+        if (id != toDoTaskDTO.Id)
+            return BadRequest();
 
         var dbTask = await _context.ToDoTask.FindAsync(id);
         if (dbTask == null)
@@ -92,13 +93,14 @@ public class ToDoTaskController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ToDoTaskDTO>> PostToDoTask(ToDoTaskDTO toDoTaskDto) {
+        if (_context.ToDoTask == null)
+            return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
+
         var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
         toDoTask.Created = DateTime.UtcNow;
         toDoTask.Updated = DateTime.UtcNow;
+        toDoTask.Id = default;
 
-        if (_context.ToDoTask == null) 
-            return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
-        
         _context.ToDoTask.Add(toDoTask);
         await _context.SaveChangesAsync();
 
