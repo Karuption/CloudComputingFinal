@@ -166,6 +166,7 @@
     <div
       v-if="addItem==true"
       class="form-wrapper"
+      @click.self="toggleFormInput"
     >
       <form @submit.prevent="submitForm()">
         <div
@@ -225,7 +226,6 @@ export default {
       newTask: {
         title: '',
         description: '',
-        created: '',
         dueDate: ''
       },
       tasks: [],
@@ -262,8 +262,7 @@ export default {
           this.newTask = {
             title: '',
             description: '',
-            dueDate: '',
-            created: ''
+            dueDate: ''
           }
         })
         .catch(error => {
@@ -746,7 +745,7 @@ form button {
 
 .empty-wrapper {
   position: absolute;
-  top: 0px;
+  top: -10px;
   height: 500px;
   pointer-events: none;
 }
