@@ -650,9 +650,11 @@ body, html {
 .form-wrapper {
   position: absolute;
   width: 100%;
-  height: auto;
-  top: 200px;
-
+  top: 0px;
+  height: 785px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .form-wrapper form {
