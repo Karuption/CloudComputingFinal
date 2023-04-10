@@ -100,8 +100,18 @@
           </div>
         </div>
         <div class="footer-wrapper">
+          <div @click="toggleCanvasInput">
+            <img
+              class="canvas-icon tip"
+              data-tippy-content="Login Through Canvas"
+              src="/images/canvas.png"
+            >
+          </div>
           <div @click="toggleFormInput">
-            <span class="material-symbols-outlined blue-circle">add</span>
+            <span
+              class="material-symbols-outlined blue-circle tip"
+              data-tippy-content="Add New Task"
+            >add</span>
           </div>
         </div>
       </div>
@@ -164,10 +174,11 @@
       </div>
     </div>
     <div
-      v-if="addItem==true"
+      v-if="addItem===true"
       class="form-wrapper"
       @click.self="toggleFormInput"
     >
+      <h4>Add New Task</h4>
       <form @submit.prevent="submitForm()">
         <div
           class="close-form"
@@ -209,16 +220,64 @@
         </div>
       </form>
     </div>
+    <div
+      v-if="canvasLogin===true"
+      class="form-wrapper"
+      @click.self="toggleCanvasInput"
+    >
+      <h4>Login Through Canvas</h4>
+      <form @submit.prevent="submitCanvasFormDetails()">
+        <div
+          class="close-form"
+          @click="canvasLogin = false"
+        >
+          <span class="material-symbols-outlined">
+            close
+          </span>
+        </div>
+        <label
+          class="canvas-label"
+          for="canvas-url"
+        >Canvas LMS URL</label>
+        <input
+          id="canvas-url"
+          v-model="canvasUrl"
+          type="text"
+        >
+        <label
+          class="canvas-label"
+          for="access-token"
+        >OAuth Access Token</label>
+        <input
+          id="access-token"
+          v-model="accessToken"
+          type="text"
+        >
+        <div class="submit-section subb">
+          <button type="submit">
+            <div class="form-submit">
+              <span class="material-symbols-outlined blue-circle">add</span>
+            </div>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
-/*
-    Todo:
-    add empty task message
-    add edit button on full view
-*/
+import tippy from 'tippy.js'
+import 'tippy.js/dist/tippy.css'
+
+async function getUserData (url, accessToken) {
+  const response = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  })
+  return response.data
+}
 
 export default {
   data  () {
@@ -234,10 +293,26 @@ export default {
       completedList: false,
       addItem: false,
       fullDisplay: [],
-      isChecked: []
+      isChecked: [],
+      canvasLogin: false,
+      canvasUrl: '',
+      accessToken: ''
     }
   },
+  created () {
+    // Step 2: Check for code parameter in URL and exchange it for access token
+    const urlParams = new URLSearchParams(window.location.search)
+    const code = urlParams.get('code')
+    if (code) {
+      this.code = code
+      this.exchangeCodeForAccessToken()
+    }
+  },
+  updated () {
+    this.loadTippySettings()
+  },
   mounted () {
+    this.loadTippySettings()
     axios.get('http://localhost:5000/api/ToDoTask')
       .then(response => {
         this.tasks = response.data
@@ -270,6 +345,15 @@ export default {
         })
 
       this.toggleFormInput()
+    },
+    async submitCanvasFormDetails () {
+      try {
+        const userData = await getUserData(this.canvasUrl, this.accessToken)
+        this.userData = userData
+        this.canvasLogin = false
+      } catch (error) {
+        console.error(error)
+      }
     },
     removeTask (index) {
       const taskId = this.tasks[index].id
@@ -333,20 +417,19 @@ export default {
     toggleFormInput () {
       this.addItem = !this.addItem
     },
+    toggleCanvasInput () {
+      this.canvasLogin = !this.canvasLogin
+    },
     formatDate (date) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit' }
       return new Date(date).toLocaleDateString('en-US', options)
     },
-    convertToRegularTime (dateString) {
-      const date = new Date(dateString)
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hour = date.getHours() > 12 ? date.getHours() - 12 : date.getHours()
-      const minute = String(date.getMinutes()).padStart(2, '0')
-      const ampm = date.getHours() >= 12 ? 'pm' : 'am'
-      const formattedTime = `${month}/${day}/${year} at ${hour}:${minute} ${ampm}`
-      return formattedTime
+    loadTippySettings () {
+      tippy('.tip', {
+        theme: 'custom',
+        arrow: true,
+        placement: 'top'
+      })
     }
   }
 }
@@ -367,6 +450,10 @@ body, html {
 
 * {
   font-family: Poppins;
+}
+
+.material-symbols-outlined {
+  user-select: none;
 }
 
 .list-wrapper {
@@ -683,6 +770,16 @@ body, html {
   border: 1px solid rgba(156, 156, 156, 0.38);
 }
 
+.form-wrapper h4 {
+  margin: 0 auto;
+  position: absolute;
+  z-index: 10000;
+  font-size: 25px;
+  top: 220px;
+  color: #6798ff;
+  font-weight: normal;
+}
+
 form label {
   margin-bottom: 5px;
 }
@@ -769,4 +866,27 @@ form button {
   position: relative;
 }
 
+.canvas-label {
+  margin-bottom: 10px;
+  margin-top: 25px;
+}
+
+.subb {
+  margin-top: 45px;
+}
+
+.canvas-icon {
+  height: 50px;
+  width: 50px;
+  cursor: pointer;
+  border-radius: 50%;
+  font-size: 30px;
+  color: white;
+  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38);
+  margin-right: 10px;
+}
+
+.canvas-icon:hover {
+  opacity: .7;
+}
 </style>
