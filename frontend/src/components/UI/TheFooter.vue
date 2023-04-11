@@ -25,7 +25,7 @@
         @click.self="$emit('toggle-form-input')"
       >
         <h4>Add New Task</h4>
-        <form @submit.prevent="$emit('submit-form')">
+        <form @submit.prevent="$emit('submit-form'), resetUserInputs('task')">
           <div
             class="close-form"
             @click="$emit('toggle-form-input')"
@@ -72,7 +72,7 @@
         @click.self="$emit('toggle-canvas-input')"
       >
         <h4>Login Through Canvas</h4>
-        <form @submit.prevent="$emit('submit-canvas=form-details')">
+        <form @submit.prevent="$emit('submit-canvas=form-details'), resetUserInputs('canvas')">
           <div
             class="close-form"
             @click="$emit('toggle-canvas-input')"
@@ -147,6 +147,19 @@ export default {
     },
     dueDate (value) {
       this.$emit('update-dueDate', value)
+    }
+  },
+  methods: {
+    resetUserInputs (type) {
+      if (type === 'canvas') {
+        this.canvasUrl = ''
+        this.accessToken = ''
+      }
+      if (type === 'task') {
+        this.title = ''
+        this.description = ''
+        this.dueDate = ''
+      }
     }
   }
 }

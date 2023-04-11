@@ -118,8 +118,6 @@ export default {
         })
         .catch(error => {
           console.log(error)
-          // Set tasks to an empty array if the GET request fails
-          this.tasks = []
         })
     },
     submitForm () {
