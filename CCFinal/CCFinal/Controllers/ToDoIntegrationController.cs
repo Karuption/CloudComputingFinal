@@ -29,7 +29,7 @@ public class ToDoIntegrationController : ControllerBase {
     }
 
     // GET: api/ToDoTask/5
-    [HttpGet("{id}")]
+    [HttpGet("{IntegrationId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<ToDoTaskIntegrationDto>> GetToDoTask(string id) {
@@ -45,16 +45,20 @@ public class ToDoIntegrationController : ControllerBase {
 
     // PUT: api/ToDoTask/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{id}")]
+    [HttpPut("{IntegrationId}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> PutToDoTask(string id, ToDoTaskIntegrationDto toDoTaskDTO) {
-        if (toDoTaskDTO.IntegrationId == default)
-            toDoTaskDTO.IntegrationId = id;
-        if (id != toDoTaskDTO.IntegrationId)
+    public async Task<IActionResult> PutToDoTask(string IntegrationId, ToDoTaskIntegrationDto toDoTaskDTO) {
+        if (toDoTaskDTO.UserID == default)
             return BadRequest();
-        var task = _context.ToDoTask.FirstOrDefault(x => x.IntegrationId == id);
+        if (toDoTaskDTO.IntegrationId == default)
+            toDoTaskDTO.IntegrationId = IntegrationId;
+        if (IntegrationId != toDoTaskDTO.IntegrationId)
+            return BadRequest();
+
+        var task = await _context.ToDoTask.FirstOrDefaultAsync(x =>
+            x.IntegrationId == IntegrationId && x.UserID == toDoTaskDTO.UserID);
 
         if (task is null)
             return NotFound();
@@ -89,8 +93,7 @@ public class ToDoIntegrationController : ControllerBase {
 
         var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
         toDoTask.Id = default;
-        toDoTask.Created = DateTime.UtcNow;
-        toDoTask.Updated = DateTime.UtcNow;
+        toDoTask.Created = toDoTask.Updated = DateTime.UtcNow;
 
         _context.ToDoTask.Add(toDoTask);
         await _context.SaveChangesAsync();
@@ -102,13 +105,17 @@ public class ToDoIntegrationController : ControllerBase {
     }
 
     // DELETE: api/ToDoTask/5
-    [HttpDelete("{id}")]
+    [HttpDelete("{IntegrationId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteToDoTask(int id) {
-        if (_context.ToDoTask == null) return NotFound();
-        var toDoTask = await _context.ToDoTask.FindAsync(id);
-        if (toDoTask == null) return NotFound();
+    public async Task<IActionResult> DeleteToDoTask(string id) {
+        if (_context.ToDoTask == null)
+            return NotFound();
+
+        var toDoTask = await _context.ToDoTask.FirstOrDefaultAsync(x => x.IntegrationId == id);
+
+        if (toDoTask == null)
+            return NotFound();
 
         _context.ToDoTask.Remove(toDoTask);
         await _context.SaveChangesAsync();
