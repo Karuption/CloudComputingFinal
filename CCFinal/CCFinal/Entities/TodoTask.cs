@@ -14,8 +14,9 @@ public class ToDoTask {
     public TaskType TaskType { get; set; }
     public bool IsCompleted { get; set; }
     public bool IsFavorite { get; set; }
+
     [Key]
-    public int UserID {get; set; }
+    public Guid UserID { get; set; }
 
     [Key]
     public string? IntegrationId { get; set; }

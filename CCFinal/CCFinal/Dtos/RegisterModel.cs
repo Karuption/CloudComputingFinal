@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CCFinal.Entities;
+namespace CCFinal.Dtos;
 
-public class LoginModel {
+public class RegisterModel {
     [Required(ErrorMessage = "User Name is required")]
     public string? Username { get; set; }
 

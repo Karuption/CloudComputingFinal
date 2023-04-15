@@ -17,17 +17,15 @@ public class AuthenticateController : ControllerBase {
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthenticateController> _logger;
-    private readonly IHttpContextAccessor _contextAccessor;
 
     public AuthenticateController(
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IConfiguration configuration, ILogger<AuthenticateController> logger, IHttpContextAccessor contextAccessor) {
+        IConfiguration configuration, ILogger<AuthenticateController> logger) {
         _userManager = userManager;
         _roleManager = roleManager;
         _configuration = configuration;
         _logger = logger;
-        _contextAccessor = contextAccessor;
     }
 
     [HttpPost]
@@ -37,10 +35,10 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
     public async Task<IActionResult> Login([FromBody] LoginModel model) {
         var user = await _userManager.FindByNameAsync(model.Username);
-        if (user != null && await _userManager.CheckPasswordAsync(user, model.Password)) {
+        if (user is not null && await _userManager.CheckPasswordAsync(user, model.Password)) {
             IList<string> userRoles = await _userManager.GetRolesAsync(user);
 
-            List<Claim> authClaims = new List<Claim> {
+            List<Claim> authClaims = new() {
                 new(ClaimTypes.Name, user.UserName),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
@@ -66,7 +64,7 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Register([FromBody] RegisterModel model) {
         var userExists = await _userManager.FindByNameAsync(model.Username);
-        if (userExists != null)
+        if (userExists is not null)
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new Response { Status = "Error", Message = "User already exists!" });
 
@@ -116,23 +114,24 @@ public class AuthenticateController : ControllerBase {
         return Ok(new Response { Status = "Success", Message = "User created successfully!" });
     }
 
+    [Authorize]
     [HttpPost("change-password")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ChangePassword(string oldPassword, string newPassword) {
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model) {
         try {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-                return BadRequest();
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            if (user is null)
+                return NotFound();
 
-            var pass = await _userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+            var pass = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
             if (pass.Errors.Any()) {
                 _logger.LogInformation($"Password change errors {pass.Errors}");
-                return Accepted();
+                return BadRequest("Unable to change password");
             }
 
             if (pass.Succeeded)
-                return NoContent();
+                return Ok(new Response { Status = "Success", Message = "Password changed successfully!" });
         }
         catch (Exception ex) {
             _logger.LogInformation(ex, "Unable to change password");
