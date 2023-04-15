@@ -19,4 +19,6 @@ public class ToDoTask {
 
     [Key]
     public string? IntegrationId { get; set; }
+
+    public bool IsDeleted { get; set; }
 }

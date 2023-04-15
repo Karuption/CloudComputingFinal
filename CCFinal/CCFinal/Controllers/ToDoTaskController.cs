@@ -12,11 +12,12 @@ public class ToDoTaskController : ControllerBase
 {
     private readonly CCFinalContext _context;
     private readonly ITodoMapper _todoMapper;
+    private readonly ILogger<ToDoTaskController> _logger;
 
-    public ToDoTaskController(CCFinalContext context, ITodoMapper todoMapper)
-    {
+    public ToDoTaskController(CCFinalContext context, ITodoMapper todoMapper, ILogger<ToDoTaskController> logger) {
         _context = context;
         _todoMapper = todoMapper;
+        _logger = logger;
     }
 
     // GET: api/ToDoTask
@@ -26,8 +27,10 @@ public class ToDoTaskController : ControllerBase
     public async Task<ActionResult<IEnumerable<ToDoTaskDTO>>> GetToDoTask()
     {
         if (_context.ToDoTask == null) return NotFound();
-        
-        return _context.ToDoTask.Select(x=>_todoMapper.TodoTaskToDto(x)).ToList();
+
+        return await _context.ToDoTask.Where(x => !x.IsDeleted)
+            .Select(x => _todoMapper.TodoTaskToDto(x))
+            .ToListAsync();
     }
 
     // GET: api/ToDoTask/5
@@ -40,7 +43,7 @@ public class ToDoTaskController : ControllerBase
             return NotFound();
         var toDoTask = await _context.ToDoTask.FindAsync(id);
 
-        if (toDoTask == null)
+        if (toDoTask == null || toDoTask.IsDeleted)
             return NotFound();
 
         return _todoMapper.TodoTaskToDto(toDoTask);
@@ -58,7 +61,10 @@ public class ToDoTaskController : ControllerBase
         if (id != toDoTaskDTO.Id)
             return BadRequest();
 
-        var dbTask = await _context.ToDoTask.FindAsync(id);
+        var dbTask = await _context.ToDoTask
+            .Where(x => !x.IsDeleted)
+            .FirstOrDefaultAsync(x => x.UserID == id);
+
         if (dbTask == null)
             return NotFound();
 
@@ -67,20 +73,16 @@ public class ToDoTaskController : ControllerBase
         toDoTaskDTO.Updated = DateTime.UtcNow;
         _todoMapper.TodoTaskDtoToModel(toDoTaskDTO, dbTask);
 
-        try
-        {
+        try {
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!ToDoTaskExists(id))
-            {
+        catch (Exception ex) {
+            if (!ToDoTaskExists(id)) {
+                _logger.LogInformation($"Task {id} was queried, but could not be found");
                 return NotFound();
             }
-            else
-            {
-                throw;
-            }
+
+            _logger.LogDebug(ex, $"Unable to delete task {dbTask.Id}");
         }
 
         return NoContent();
@@ -113,21 +115,28 @@ public class ToDoTaskController : ControllerBase
     // DELETE: api/ToDoTask/5
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteToDoTask(int id)
     {
         if (_context.ToDoTask == null)
-        {
             return NotFound();
-        }
+
         var toDoTask = await _context.ToDoTask.FindAsync(id);
+
         if (toDoTask == null)
-        {
             return NotFound();
-        }
+
 
         _context.ToDoTask.Remove(toDoTask);
-        await _context.SaveChangesAsync();
+
+        try {
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex) {
+            _logger.LogDebug(ex, $"Unable to remove object {toDoTask?.Id}");
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
 
         return NoContent();
     }
