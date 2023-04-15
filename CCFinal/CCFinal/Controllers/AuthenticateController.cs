@@ -146,7 +146,7 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
-    public async Task<IActionResult> CheckAuthorization() {
+    public async Task<IActionResult> CheckAuthorization([FromHeader(Name = "Authorize")] string? token) {
         return Ok();
     }
 

@@ -37,7 +37,6 @@ builder.Services.AddAuthentication(options => {
         options.TokenValidationParameters = new TokenValidationParameters {
             ValidateIssuer = true,
             ValidateAudience = false,
-            //ValidateIssuer = true,
             //ValidateAudience = true,
             //ValidAudience = configuration["JWT:ValidAudience"],
             ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
