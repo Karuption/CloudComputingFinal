@@ -5,10 +5,9 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
-COPY ["CCFinal.CanvasIntegration/CCFinal.CanvasIntegration.csproj", "CCFinal.CanvasIntegration/"]
-RUN dotnet restore "CCFinal.CanvasIntegration/CCFinal.CanvasIntegration.csproj"
+COPY "CCFinal.CanvasIntegration.csproj" .
+RUN dotnet restore "CCFinal.CanvasIntegration.csproj"
 COPY . .
-WORKDIR "/src/CCFinal.CanvasIntegration"
 RUN dotnet build "CCFinal.CanvasIntegration.csproj" -c Release -o /app/build
 
 FROM build AS publish

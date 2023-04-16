@@ -1,8 +1,9 @@
 using CCFinal.CanvasIntegration;
 
-IHost host = Host.CreateDefaultBuilder(args)
+var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services => {
         services.AddHostedService<Worker>();
+        services.AddLogging();
     })
     .Build();
 
