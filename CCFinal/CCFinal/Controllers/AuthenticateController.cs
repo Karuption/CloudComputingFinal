@@ -18,15 +18,17 @@ public class AuthenticateController : ControllerBase {
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthenticateController> _logger;
+    private readonly ApplicationDbContext _userContext;
 
     public AuthenticateController(
         UserManager<User> userManager,
         RoleManager<IdentityRole> roleManager,
-        IConfiguration configuration, ILogger<AuthenticateController> logger) {
+        IConfiguration configuration, ILogger<AuthenticateController> logger, ApplicationDbContext userContext) {
         _userManager = userManager;
         _roleManager = roleManager;
         _configuration = configuration;
         _logger = logger;
+        _userContext = userContext;
     }
 
     [HttpPost]
@@ -162,9 +164,8 @@ public class AuthenticateController : ControllerBase {
         return Ok();
     }
 
-
-    [HttpPost]
     [Authorize]
+    [HttpPost("add-CanvasKey")]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -174,13 +175,7 @@ public class AuthenticateController : ControllerBase {
         if (!ModelState.IsValid)
             return BadRequest();
 
-        var user = await _userManager.FindByNameAsync(HttpContext.User.Identity.Name);
-
-
-        if (user.KeysList.Any(x => x.Contains(name))) {
-            ; //update key
-        }
-        //create key
+        // Pending integration handling
 
         return Ok();
     }
@@ -199,3 +194,4 @@ public class AuthenticateController : ControllerBase {
         return token;
     }
 }
+
