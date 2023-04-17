@@ -72,7 +72,7 @@ public class AuthenticateController : ControllerBase {
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new Response { Status = "Error", Message = "User already exists!" });
 
-        IdentityUser user = new() {
+        User user = new() {
             SecurityStamp = Guid.NewGuid().ToString(),
             UserName = model.Username
         };
@@ -99,7 +99,7 @@ public class AuthenticateController : ControllerBase {
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new Response { Status = "Error", Message = "User already exists!" });
 
-        IdentityUser user = new() {
+        User user = new() {
             SecurityStamp = Guid.NewGuid().ToString(),
             UserName = model.Username
         };
