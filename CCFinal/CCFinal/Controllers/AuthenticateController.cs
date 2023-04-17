@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CCFinal.Data;
 using CCFinal.Dtos;
 using CCFinal.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -13,13 +14,13 @@ namespace CCFinal.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class AuthenticateController : ControllerBase {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<User> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthenticateController> _logger;
 
     public AuthenticateController(
-        UserManager<IdentityUser> userManager,
+        UserManager<User> userManager,
         RoleManager<IdentityRole> roleManager,
         IConfiguration configuration, ILogger<AuthenticateController> logger) {
         _userManager = userManager;
@@ -35,12 +36,12 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
     public async Task<IActionResult> Login([FromBody] LoginModel model) {
         var user = await _userManager.FindByNameAsync(model.Username);
-        if (user is not null && await _userManager.CheckPasswordAsync(user, model.Password)) {
+        if ((user is not null && await _userManager.CheckPasswordAsync(user, model.Password)) || !ModelState.IsValid) {
             IList<string> userRoles = await _userManager.GetRolesAsync(user);
 
             List<Claim> authClaims = new() {
-                new(ClaimTypes.Name, user.UserName),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             foreach (var userRole in userRoles)
@@ -59,10 +60,13 @@ public class AuthenticateController : ControllerBase {
 
     [HttpPost]
     [Route("register")]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Register([FromBody] RegisterModel model) {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
         var userExists = await _userManager.FindByNameAsync(model.Username);
         if (userExists is not null)
             return StatusCode(StatusCodes.Status500InternalServerError,
@@ -87,6 +91,9 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterAdmin([FromBody] RegisterModel model) {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
         var userExists = await _userManager.FindByNameAsync(model.Username);
         if (userExists != null)
             return StatusCode(StatusCodes.Status500InternalServerError,
@@ -119,6 +126,9 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model) {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
         try {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             if (user is null)
@@ -143,9 +153,35 @@ public class AuthenticateController : ControllerBase {
     [Authorize]
     [HttpGet("check")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
     public async Task<IActionResult> CheckAuthorization([FromHeader(Name = "Authorize")] string? token) {
+        if (!ModelState.IsValid)
+            return BadRequest();
+        return Ok();
+    }
+
+
+    [HttpPost]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddIntegrationKey(string name, string key) {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
+        var user = await _userManager.FindByNameAsync(HttpContext.User.Identity.Name);
+
+
+        if (user.KeysList.Any(x => x.Contains(name))) {
+            ; //update key
+        }
+        //create key
+
         return Ok();
     }
 

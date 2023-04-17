@@ -5,24 +5,12 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using CCFinal.Entities;
 
-namespace CCFinal.Data
-{
-    public class CCFinalContext : DbContext
-    {
-        public CCFinalContext (DbContextOptions<CCFinalContext> options)
-            : base(options)
-        {
-        }
+namespace CCFinal.Data;
 
-        public DbSet<CCFinal.Entities.ToDoTask> ToDoTask { get; set; } = default!;
+public class CCFinalContext : DbContext {
+    public CCFinalContext (DbContextOptions<CCFinalContext> options)
+        : base(options)
+    {}
 
-        public async Task Seed() {
-
-            var seed = new List<ToDoTask>() {
-                new(){Title = "Your first item!"}
-            };
-
-            await ToDoTask.AddRangeAsync(seed);
-        }
-    }
+    public DbSet<CCFinal.Entities.ToDoTask> ToDoTask { get; set; } = default!;
 }

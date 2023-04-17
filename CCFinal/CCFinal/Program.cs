@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 // DB Setup
 builder.Services.AddDbContext<CCFinalContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CCFinalContext") 
-                         ?? throw new InvalidOperationException("Connection string 'CCFinalContext' not found.")));
+                         ?? throw new InvalidOperationException($"Connection string '{nameof(CCFinalContext)}' not found.")));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConnStr")));
@@ -77,7 +77,7 @@ var app = builder.Build();
 app.UseCors("final");
 
 
-//DB Setup
+// Force DB Migrations
 using(var scope = app.Services.CreateScope())
 {
     var ccFinalContext = scope.ServiceProvider.GetRequiredService<CCFinalContext>();

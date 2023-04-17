@@ -11,3 +11,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser> {
         base.OnModelCreating(builder);
     }
 }
+
+public class User : IdentityUser {
+    public List<string> KeysList = new();
+}

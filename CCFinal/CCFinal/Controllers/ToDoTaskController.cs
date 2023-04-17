@@ -86,7 +86,7 @@ public class ToDoTaskController : ControllerBase
     public async Task<IActionResult> PutToDoTask(int id, ToDoTaskDTO toDoTaskDTO) {
         if (toDoTaskDTO.Id == default)
             toDoTaskDTO.Id = id;
-        if (id != toDoTaskDTO.Id)
+        if (toDoTaskDTO.Id != id)
             return BadRequest();
 
         // Fetch task by User ID or globally shared, return not found otherwise
