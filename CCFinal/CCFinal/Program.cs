@@ -18,7 +18,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 
 // Identity Setup
-builder.Services.AddIdentity<User, IdentityRole>()
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -70,6 +70,12 @@ builder.Services.AddCors(option => {
         policy.DisallowCredentials();
         policy.SetIsOriginAllowed(_ => true);
     });
+});
+
+builder.Services.AddCap(options => {
+    options.UseDashboard();
+    options.UseEntityFramework<ApplicationDbContext>();
+    options.UseKafka("localhost:9092");
 });
 
 var app = builder.Build();

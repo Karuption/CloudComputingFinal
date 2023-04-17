@@ -1,9 +1,9 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using CCFinal.Data;
 using CCFinal.Dtos;
 using CCFinal.Entities;
+using DotNetCore.CAP;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,17 +18,19 @@ public class AuthenticateController : ControllerBase {
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthenticateController> _logger;
-    private readonly ApplicationDbContext _userContext;
+    private readonly ICapPublisher _capPublisher;
 
     public AuthenticateController(
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IConfiguration configuration, ILogger<AuthenticateController> logger, ApplicationDbContext userContext) {
+        IConfiguration configuration,
+        ILogger<AuthenticateController> logger,
+        ICapPublisher capPublisher) {
         _userManager = userManager;
         _roleManager = roleManager;
         _configuration = configuration;
         _logger = logger;
-        _userContext = userContext;
+        _capPublisher = capPublisher;
     }
 
     [HttpPost]
@@ -171,11 +173,17 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AddIntegrationKey(string name, string key) {
+    public async Task<IActionResult> AddCanvasIntegrationKey(string key) {
         if (!ModelState.IsValid)
             return BadRequest();
 
-        // Pending integration handling
+        var user = await _userManager.FindByNameAsync(HttpContext.User.Identity.Name);
+
+        if (user is null)
+            return BadRequest();
+
+        await _capPublisher.PublishAsync("Integration.Canvas",
+            new { UserId = user.Id, Key = key, Timestamp = DateTime.UtcNow });
 
         return Ok();
     }

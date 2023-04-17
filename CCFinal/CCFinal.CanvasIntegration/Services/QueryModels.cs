@@ -1,4 +1,4 @@
-﻿namespace CCFinal.CanvasIntegration;
+﻿namespace CCFinal.CanvasIntegration.Services;
 
 public record Data(AllCourses data);
 
