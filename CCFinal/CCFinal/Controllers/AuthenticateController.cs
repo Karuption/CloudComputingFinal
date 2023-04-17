@@ -14,14 +14,14 @@ namespace CCFinal.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class AuthenticateController : ControllerBase {
-    private readonly UserManager<User> _userManager;
+    private readonly UserManager<IdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthenticateController> _logger;
     private readonly ApplicationDbContext _userContext;
 
     public AuthenticateController(
-        UserManager<User> userManager,
+        UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IConfiguration configuration, ILogger<AuthenticateController> logger, ApplicationDbContext userContext) {
         _userManager = userManager;
@@ -74,7 +74,7 @@ public class AuthenticateController : ControllerBase {
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new Response { Status = "Error", Message = "User already exists!" });
 
-        User user = new() {
+        IdentityUser user = new() {
             SecurityStamp = Guid.NewGuid().ToString(),
             UserName = model.Username
         };
@@ -101,7 +101,7 @@ public class AuthenticateController : ControllerBase {
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new Response { Status = "Error", Message = "User already exists!" });
 
-        User user = new() {
+        IdentityUser user = new() {
             SecurityStamp = Guid.NewGuid().ToString(),
             UserName = model.Username
         };
