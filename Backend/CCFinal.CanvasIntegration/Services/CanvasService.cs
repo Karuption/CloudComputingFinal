@@ -91,7 +91,7 @@ public class CanvasService : ICanvasService {
             if (course.UpdatedAt > updateTime)
                 foreach (var assignment in course.AssignmentsConnection.Nodes) {
                     if (assignment.UpdatedAt > updateTime) {
-                        _capPublisher.Publish("IntegrationTaskUpsert",
+                        await _capPublisher.PublishAsync("IntegrationTaskUpsert",
                             new ToDoTaskIntegrationDto(default,
                                 assignment.Id,
                                 assignment.CreatedAt,
@@ -103,14 +103,13 @@ public class CanvasService : ICanvasService {
                                 $"{course.Name} : {assignment.Name}",
                                 user.BaseUrl + assignment.HtmlUrl.PathAndQuery,
                                 assignment.UpdatedAt),
-                            new Dictionary<string, string?>
-                                { { KafkaHeaders.KafkaKey, assignment.Id } }); //Key is the Integration ID
+                            new Dictionary<string, string?> { { KafkaHeaders.KafkaKey, assignment.Id } },
+                            stoppingToken); //Key is the Integration ID
 
                         user!.LastCanvasUpdateDateTime =
                             userInfo.LastCanvasUpdateDateTime.MaxDateTime(assignment.UpdatedAt);
-                        await _dbContext.SaveChangesAsync(stoppingToken);
                         _logger.LogInformation($"""
-                        Updated Course Name: {course.Name}
+                        Updated Course for user {user.UserID} Name: {course.Name}
                             Assignment Name: {assignment.Name}
                             Assignment Created: {assignment.CreatedAt}
                             Assignment Updated: {assignment.UpdatedAt}
@@ -118,6 +117,8 @@ public class CanvasService : ICanvasService {
                         """);
                     }
                 }
+
+            await _dbContext.SaveChangesAsync(stoppingToken);
         }
     }
 }
