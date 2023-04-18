@@ -9,13 +9,19 @@
         :class="{ 'gray-text': todoList, 'disable-pointer-events': todoList }"
         @click="$emit('show-todo'), animateList()"
       >
-        Todo
+        Todo <strong
+          v-show="completedList"
+          v-if="incompleteTasksCounter!==0"
+        >{{ incompleteTasksCounter }}</strong>
       </li>
       <li
         :class="{ 'gray-text': completedList, 'disable-pointer-events': completedList }"
         @click="$emit('show-completed'), animateList()"
       >
-        Completed
+        Completed <strong
+          v-show="todoList"
+          v-if="completedTasksCounter!==0"
+        >{{ completedTasksCounter }}</strong>
       </li>
     </ul>
     <span
@@ -23,7 +29,6 @@
     >
       sort
     </span>
-
     <h1 v-if="todoList">
       Todo
     </h1>
@@ -37,6 +42,10 @@
 export default {
   name: 'TheHeader',
   props: {
+    tasks: {
+      type: Array,
+      required: true
+    },
     tabs: {
       type: Boolean,
       required: true
@@ -48,6 +57,19 @@ export default {
     completedList: {
       type: Boolean,
       required: true
+    }
+  },
+  data () {
+    return {
+      // Remove the counter from data()
+    }
+  },
+  computed: {
+    completedTasksCounter () {
+      return this.tasks.filter(task => task.isCompleted).length
+    },
+    incompleteTasksCounter () {
+      return this.tasks.filter(task => !task.isCompleted).length
     }
   },
   mounted () {
@@ -70,6 +92,22 @@ export default {
 </script>
 
 <style scoped>
+  strong {
+    background-color: #fd987a;
+    color: white;
+    padding: 1px;
+    font-weight: normal;
+    font-size: 10px;
+    padding-right: 6px;
+    padding-left: 6px;
+    margin-left: 3px;
+    border-radius: 2px;
+  }
+
+  .background-grey {
+    background-color: gray;
+  }
+
 .header {
   display: flex;
   align-items: center;

@@ -1,15 +1,20 @@
 <template>
   <div>
+    <div v-if="showExtensions">
+      <ExtensionViewer
+        @toggle-extension-display="extensionsViewToggle"
+        @toggle-canvas-input="$emit('toggle-canvas-input')"
+      />
+    </div>
     <div
       v-if="type==='buttons'"
       class="footer-wrapper"
     >
-      <div @click="$emit('toggle-canvas-input')">
-        <img
-          class="canvas-icon tip"
-          data-tippy-content="Login Through Canvas"
-          src="/images/canvas.png"
-        >
+      <div @click="extensionsViewToggle()">
+        <span
+          class="material-symbols-outlined blue-circle tip right"
+          data-tippy-content="Extensions"
+        >api</span>
       </div>
       <div @click="$emit('toggle-form-input')">
         <span
@@ -113,8 +118,13 @@
 </template>
 
 <script>
+import ExtensionViewer from '../UI/ExtensionsViewer.vue'
+
 export default {
   name: 'TheFooter',
+  components: {
+    ExtensionViewer
+  },
   props: {
     addItem: {
       type: Boolean,
@@ -135,7 +145,8 @@ export default {
       description: '',
       dueDate: '',
       canvasUrl: '',
-      accessToken: ''
+      accessToken: '',
+      showExtensions: false
     }
   },
   watch: {
@@ -160,6 +171,9 @@ export default {
         this.description = ''
         this.dueDate = ''
       }
+    },
+    extensionsViewToggle () {
+      this.showExtensions = !this.showExtensions
     }
   }
 }
@@ -236,6 +250,10 @@ export default {
   align-items: left;
   flex-direction: column;
   font-weight: bold;
+}
+
+.right {
+  margin-right: 5px;
 }
 
 .form-wrapper form input, textarea {

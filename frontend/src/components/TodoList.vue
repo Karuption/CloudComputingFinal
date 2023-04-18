@@ -3,6 +3,7 @@
     <div class="list-wrapper">
       <TheHeader
         :tabs="tabs"
+        :tasks="tasks"
         :todo-list="todoList"
         :completed-list="completedList"
         @show-todo="showTodo"
@@ -13,7 +14,7 @@
         <div
           class="content-wrapper"
         >
-          <TodoList
+          <TodoItem
             type="todo"
             :tasks="tasks"
             :is-checked="isChecked"
@@ -38,7 +39,7 @@
         v-else
         class="completed-wrapper"
       >
-        <TodoList
+        <TodoItem
           type="completed"
           :tasks="tasks"
           :is-checked="isChecked"
@@ -74,14 +75,14 @@ import 'tippy.js/dist/tippy.css'
 
 import TheHeader from './UI/TheHeader.vue'
 import EmptyStateDisplay from './UI/EmptyStateDisplay.vue'
-import TodoList from './TodoItem.vue'
+import TodoItem from './TodoItem.vue'
 import TheFooter from './UI/TheFooter.vue'
 
 export default {
   components: {
     TheHeader,
     EmptyStateDisplay,
-    TodoList,
+    TodoItem,
     TheFooter
   },
   data  () {
