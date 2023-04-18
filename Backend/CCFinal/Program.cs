@@ -63,12 +63,14 @@ builder.Services.AddLogging();
 builder.Logging.AddConsole();
 
 builder.Services.AddCors(option => {
+    option.DefaultPolicyName = "final";
     option.AddPolicy("final", policy => {
-        policy.AllowAnyHeader();
-        policy.AllowAnyMethod();
-        policy.AllowAnyOrigin();
-        policy.DisallowCredentials();
-        policy.SetIsOriginAllowed(_ => true);
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .SetIsOriginAllowed(host => true)
+            .SetIsOriginAllowedToAllowWildcardSubdomains()
+            .Build();
     });
 });
 
@@ -82,6 +84,15 @@ var app = builder.Build();
 
 app.UseCors("final");
 
+app.Use((context, next) => {
+    if (string.IsNullOrWhiteSpace(context.Response.Headers.AccessControlAllowOrigin)) {
+        context.Response.Headers.AccessControlAllowOrigin = "*";
+        context.Response.Headers.AccessControlAllowMethods = "*";
+        context.Response.Headers.AccessControlAllowHeaders = "*";
+    }
+
+    return next.Invoke();
+});
 
 // Force DB Migrations
 using(var scope = app.Services.CreateScope())
