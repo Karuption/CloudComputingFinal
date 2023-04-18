@@ -33,6 +33,7 @@ public class Worker : BackgroundService {
             List<UserInformation> users = await canvasService.GetUsers();
 
             // Process All Users that need updates in Parallel
+
             if (users.Count > 0)
                 foreach (var userInformation in users)
                     taskliList.Add(canvasService.ProcessUser(userInformation, stoppingToken));
@@ -40,7 +41,7 @@ public class Worker : BackgroundService {
             await Task.WhenAll(taskliList);
             taskliList.Clear();
 
-            await Task.Delay(TimeSpan.FromMinutes(1));
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
         }
 
 

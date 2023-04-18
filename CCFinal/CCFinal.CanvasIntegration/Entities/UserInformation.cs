@@ -12,4 +12,5 @@ public class UserInformation {
 
     public DateTime LastRunDateTime { get; set; }
     public Guid UserID { get; set; }
+    public string BaseUrl { get; set; }
 }

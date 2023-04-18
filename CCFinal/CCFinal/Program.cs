@@ -75,7 +75,7 @@ builder.Services.AddCors(option => {
 builder.Services.AddCap(options => {
     options.UseDashboard();
     options.UseEntityFramework<ApplicationDbContext>();
-    options.UseKafka("localhost:9092");
+    options.UseKafka(builder.Configuration.GetSection("Kafka")["Servers"] ?? string.Empty);
 });
 
 var app = builder.Build();

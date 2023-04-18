@@ -18,17 +18,19 @@ public class ToDoTaskController : ControllerBase
     private readonly IHttpContextAccessor _ca;
 
     public ToDoTaskController(CCFinalContext context, ITodoMapper todoMapper, ILogger<ToDoTaskController> logger,
-        UserManager<IdentityUser> userManager) {
+        UserManager<IdentityUser> userManager, IHttpContextAccessor ca) {
         _context = context;
         _todoMapper = todoMapper;
         _logger = logger;
         _userManager = userManager;
+        _ca = ca;
     }
 
     // GET: api/ToDoTask
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<ToDoTaskDTO>>> GetToDoTask()
     {
         if (_context.ToDoTask == null)
@@ -36,12 +38,16 @@ public class ToDoTaskController : ControllerBase
 
         // Get List by User ID
         if (HttpContext.User.Identity.IsAuthenticated) {
-            var userId = await _userManager.FindByNameAsync(_ca.HttpContext.User.Identity.Name);
-            if (userId == null)
-                return NotFound();
-            return await _context.ToDoTask.Where(x => !x.IsDeleted && x.UserID == Guid.Parse(userId.Id))
-                .Select(x => _todoMapper.TodoTaskToDto(x))
-                .ToListAsync();
+            if (HttpContext.User.Identity.Name is not null) {
+                var userId = await _userManager.FindByNameAsync(HttpContext.User.Identity.Name);
+                if (userId == null)
+                    return NotFound();
+                return await _context.ToDoTask.Where(x => !x.IsDeleted && x.UserID == Guid.Parse(userId.Id))
+                    .Select(x => _todoMapper.TodoTaskToDto(x))
+                    .ToListAsync();
+            }
+
+            return BadRequest();
         }
 
         // Return globally shared for account-less
@@ -64,14 +70,13 @@ public class ToDoTaskController : ControllerBase
         if (toDoTask == null || toDoTask.IsDeleted)
             return NotFound();
 
-        // Check the user ID, if user is authenticated
-        if (HttpContext.User.Identity.IsAuthenticated || toDoTask.UserID != default) {
-            var user = await _userManager.FindByNameAsync(_ca?.HttpContext?.User?.Identity?.Name);
+        // Guard the user ID, if user is authenticated
+        if (HttpContext.User.Identity?.IsAuthenticated ?? (false || toDoTask.UserID != default)) {
+            var user = await _userManager.FindByNameAsync(_ca.HttpContext!.User.Identity!.Name!);
             if (user == null)
                 return NotFound();
-            if (Guid.Parse(user.Id) == toDoTask.UserID)
-                return Ok(_todoMapper.TodoTaskToDto(toDoTask));
-            return NotFound();
+            if (Guid.Parse(user.Id) != toDoTask.UserID)
+                return NotFound();
         }
 
         return Ok(_todoMapper.TodoTaskToDto(toDoTask));
@@ -179,6 +184,13 @@ public class ToDoTaskController : ControllerBase
             var user = await _userManager.FindByNameAsync(_ca.HttpContext.User.Identity.Name);
             if (user is null || toDoTask.UserID != Guid.Parse(user.Id))
                 return NotFound();
+        }
+
+        // Checking if it is an integration task
+        if (string.IsNullOrWhiteSpace(toDoTask.IntegrationId)) {
+            toDoTask.IsDeleted = true;
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // Removing task

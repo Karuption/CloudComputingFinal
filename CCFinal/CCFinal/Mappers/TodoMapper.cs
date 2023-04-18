@@ -14,6 +14,7 @@ public partial class TodoMapper : ITodoMapper {
     public partial void TodoTaskDtoToModel(ToDoTaskIntegrationDto dto, ToDoTask model);
 
     public partial ToDoTaskIntegrationDto TodoTaskModelToDto(ToDoTask task);
+    public partial void TodoTaskModelToDto(ToDoTask model, ToDoTaskIntegrationDto task);
 }
 
 public interface ITodoMapper {
@@ -24,4 +25,5 @@ public interface ITodoMapper {
     public ToDoTask TodoTaskDtoToModel(ToDoTaskIntegrationDto task);
     public void TodoTaskDtoToModel(ToDoTaskIntegrationDto task, ToDoTask model);
     public ToDoTaskIntegrationDto TodoTaskModelToDto(ToDoTask task);
+    public void TodoTaskModelToDto(ToDoTask model, ToDoTaskIntegrationDto task);
 }

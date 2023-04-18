@@ -3,7 +3,9 @@ using System.Security.Claims;
 using System.Text;
 using CCFinal.Dtos;
 using CCFinal.Entities;
+using CCFinal.PublishedEvents;
 using DotNetCore.CAP;
+using DotNetCore.CAP.Kafka;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -173,7 +175,8 @@ public class AuthenticateController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AddCanvasIntegrationKey(string key) {
+    public async Task<IActionResult>
+        AddCanvasIntegrationKey(CanvasApiModel model, CancellationToken cancellationToken = default) {
         if (!ModelState.IsValid)
             return BadRequest();
 
@@ -182,8 +185,16 @@ public class AuthenticateController : ControllerBase {
         if (user is null)
             return BadRequest();
 
+        _logger.LogInformation($"""
+            Received CanvasAPI model:
+                {model.AccessToken}
+                {model.CavasUrl}
+            """);
+
         await _capPublisher.PublishAsync("Integration.Canvas",
-            new { UserId = user.Id, Key = key, Timestamp = DateTime.UtcNow });
+            new IntegrationCanvas(user.Id, model.AccessToken, model.CavasUrl),
+            new Dictionary<string, string> { { KafkaHeaders.KafkaKey, user.Id } }!,
+            cancellationToken);
 
         return Ok();
     }

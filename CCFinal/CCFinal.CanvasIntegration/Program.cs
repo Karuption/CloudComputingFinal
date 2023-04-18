@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((hostBuilderContext, config) => {
-        if (!hostBuilderContext.HostingEnvironment.IsDevelopment())
-            config.AddEnvironmentVariables("KEY__");
+        //if (!hostBuilderContext.HostingEnvironment.IsDevelopment())
+        //    config.AddEnvironmentVariables("KEY__");
     })
     .ConfigureServices((hostContext, services) => {
         services.AddLogging();
@@ -26,9 +26,9 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddTransient<IKeyUpdate, KeyUpdate>();
         services.AddCap(options => {
             options.UseEntityFramework<CanvasIntegrationDbContext>();
-            options.UseKafka("localhost:9092");
+            options.UseKafka(hostContext.Configuration.GetSection("Kafka")["Servers"] ?? string.Empty);
             options.DefaultGroupName = "CanvasIntegrationConsumer";
-            options.SucceedMessageExpiredAfter = 1;
+            options.SucceedMessageExpiredAfter = 10 * 60;
         });
 
         services.AddSingleton<HttpClient>(_ => {

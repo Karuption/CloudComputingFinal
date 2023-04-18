@@ -6,6 +6,7 @@ using CCFinal.CanvasIntegration.Database;
 using CCFinal.CanvasIntegration.Entities;
 using CCFinal.CanvasIntegration.PublishEvents;
 using DotNetCore.CAP;
+using DotNetCore.CAP.Kafka;
 using Microsoft.EntityFrameworkCore;
 
 namespace CCFinal.CanvasIntegration.Services;
@@ -53,9 +54,14 @@ public class CanvasService : ICanvasService {
     }
 
     public async Task ProcessUser(UserInformation userInfo, CancellationToken stoppingToken = default) {
+        var user = await _dbContext.Information.FirstOrDefaultAsync(x => x.UserID == userInfo.UserID);
+
+        if (user is null)
+            return;
+
         // Preparing and sending external API request
         var request = new HttpRequestMessage(HttpMethod.Post, "graphql");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userInfo.Token);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
         request.Content = new StringContent(_requestString, null, MediaTypeNames.Application.Json);
 
         var response = await _client.SendAsync(request, stoppingToken);
@@ -64,7 +70,7 @@ public class CanvasService : ICanvasService {
         if (!response.IsSuccessStatusCode)
             _logger.LogDebug(
                 $"""
-                            User ID: {userInfo.UserID} 
+                            User ID: {user.UserID} 
                             Response code: {response.StatusCode} 
                             Reason: {response.ReasonPhrase ?? ""} 
                             Content: {await response.Content.ReadAsStringAsync(stoppingToken)}
@@ -76,29 +82,33 @@ public class CanvasService : ICanvasService {
             if (data is null)
                 _logger.LogDebug("Unable to unpack request");
             courses = data.data.allCourses ?? Array.Empty<Course>();
-            userInfo.LastRunDateTime = DateTime.UtcNow;
+            user.LastRunDateTime = DateTime.UtcNow;
         }
 
         // Logging updated courses
-        var maxUpdate = new DateTime();
+        var updateTime = user.LastCanvasUpdateDateTime;
         foreach (var course in courses) {
-            if (course.UpdatedAt > userInfo.LastCanvasUpdateDateTime)
+            if (course.UpdatedAt > updateTime)
                 foreach (var assignment in course.AssignmentsConnection.Nodes) {
-                    if (assignment.UpdatedAt > userInfo.LastCanvasUpdateDateTime) {
-                        _capPublisher.Publish("TaskUpsert",
+                    if (assignment.UpdatedAt > updateTime) {
+                        _capPublisher.Publish("IntegrationTaskUpsert",
                             new ToDoTaskIntegrationDto(default,
                                 assignment.Id,
                                 assignment.CreatedAt,
                                 assignment.DueAt,
-                                userInfo.UserID,
+                                user.UserID,
                                 assignment.SubmissionTypes.ParseTaskType(),
                                 false,
                                 false,
                                 $"{course.Name} : {assignment.Name}",
-                                assignment.Description,
-                                assignment.UpdatedAt));
+                                user.BaseUrl + assignment.HtmlUrl.PathAndQuery,
+                                assignment.UpdatedAt),
+                            new Dictionary<string, string?>
+                                { { KafkaHeaders.KafkaKey, assignment.Id } }); //Key is the Integration ID
 
-                        maxUpdate = maxUpdate.MaxDateTime(assignment.UpdatedAt);
+                        user!.LastCanvasUpdateDateTime =
+                            userInfo.LastCanvasUpdateDateTime.MaxDateTime(assignment.UpdatedAt);
+                        await _dbContext.SaveChangesAsync(stoppingToken);
                         _logger.LogInformation($"""
                         Updated Course Name: {course.Name}
                             Assignment Name: {assignment.Name}
@@ -109,9 +119,5 @@ public class CanvasService : ICanvasService {
                     }
                 }
         }
-
-        //Sending last run update to DB
-        userInfo.LastCanvasUpdateDateTime = maxUpdate;
-        await _dbContext.SaveChangesAsync(stoppingToken);
     }
 }

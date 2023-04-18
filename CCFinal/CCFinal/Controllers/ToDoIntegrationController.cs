@@ -1,6 +1,7 @@
 ﻿using CCFinal.Data;
 using CCFinal.Dtos;
 using CCFinal.Mappers;
+using DotNetCore.CAP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -84,35 +85,58 @@ public class ToDoIntegrationController : ControllerBase {
     // POST: api/ToDoTask
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
+    [CapSubscribe("IntegrationTaskUpsert")]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ToDoTaskDTO>> PostToDoTask(ToDoTaskDTO toDoTaskDto) {
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> PostToDoTask(ToDoTaskIntegrationDto toDoTaskDto) {
         if (_context.ToDoTask == null)
             return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
+        if (toDoTaskDto.UserID == default || string.IsNullOrWhiteSpace(toDoTaskDto.IntegrationId))
+            return BadRequest("Id fields IntegrationId and UserID cannot be null or empty");
 
-        var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
-        toDoTask.Id = default;
-        toDoTask.Created = toDoTask.Updated = DateTime.UtcNow;
+        var task = await _context.ToDoTask.AnyAsync(x =>
+            x.IntegrationId == toDoTaskDto.IntegrationId && x.UserID == toDoTaskDto.UserID);
 
-        _context.ToDoTask.Add(toDoTask);
-        await _context.SaveChangesAsync();
+        // Creation if the task doesn't exist already
+        if (!task) {
+            var toDoTask = new TodoMapper().TodoTaskDtoToModel(toDoTaskDto);
+            toDoTask.Id = default;
+            toDoTask.Created = toDoTask.Updated = DateTime.UtcNow;
 
-        _todoMapper.TodoTaskToDto(toDoTask, toDoTaskDto);
+            await _context.ToDoTask.AddAsync(toDoTask);
+            await _context.SaveChangesAsync();
+
+            _todoMapper.TodoTaskModelToDto(toDoTask, toDoTaskDto);
 
 
-        return CreatedAtAction("GetToDoTask", new { id = toDoTaskDto.Id }, toDoTaskDto);
+            return CreatedAtAction("GetToDoTask", new { id = toDoTaskDto.Id }, toDoTaskDto);
+        }
+
+        //If the task already exists, Update
+        try {
+            return await PutToDoTask(toDoTaskDto.IntegrationId, toDoTaskDto);
+        }
+        catch (Exception ex) { }
+
+        return StatusCode(StatusCodes.Status500InternalServerError,
+            new Response {
+                Status = "Error",
+                Message =
+                    $"Unable to Upsert the task for User ID: {toDoTaskDto.UserID} and Integration ID: {toDoTaskDto.IntegrationId}"
+            });
     }
 
     // DELETE: api/ToDoTask/5
     [HttpDelete("{IntegrationId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteToDoTask(string id) {
+    public async Task<IActionResult> DeleteToDoTask(string id, Guid userId) {
         if (_context.ToDoTask == null)
             return NotFound();
 
-        var toDoTask = await _context.ToDoTask.FirstOrDefaultAsync(x => x.IntegrationId == id);
+        var toDoTask = await _context.ToDoTask.FirstOrDefaultAsync(x => x.IntegrationId == id && x.UserID == userId);
 
         if (toDoTask == null)
             return NotFound();

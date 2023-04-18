@@ -17,5 +17,6 @@ public record ToDoTaskIntegrationDto(int Id,
 public enum TaskTypeDTO {
     Task,
     Quiz,
-    Assignment
+    Assignment,
+    Discussion
 }
