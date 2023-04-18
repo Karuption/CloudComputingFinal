@@ -84,6 +84,15 @@ var app = builder.Build();
 
 app.UseCors("final");
 
+app.Use((context, next) => {
+    if (string.IsNullOrWhiteSpace(context.Response.Headers.AccessControlAllowOrigin)) {
+        context.Response.Headers.AccessControlAllowOrigin = "*";
+        context.Response.Headers.AccessControlAllowMethods = "*";
+        context.Response.Headers.AccessControlAllowHeaders = "*";
+    }
+
+    return next.Invoke();
+});
 
 // Force DB Migrations
 using(var scope = app.Services.CreateScope())
