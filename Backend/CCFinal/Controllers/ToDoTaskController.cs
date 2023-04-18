@@ -42,18 +42,31 @@ public class ToDoTaskController : ControllerBase
                 var userId = await _userManager.FindByNameAsync(HttpContext.User.Identity.Name);
                 if (userId == null)
                     return NotFound();
-                return await _context.ToDoTask.Where(x => !x.IsDeleted && x.UserID == Guid.Parse(userId.Id))
+                List<ToDoTaskDTO> userTasks = await _context.ToDoTask
+                    .Where(x => !x.IsDeleted && x.UserID == Guid.Parse(userId.Id))
                     .Select(x => _todoMapper.TodoTaskToDto(x))
                     .ToListAsync();
+                foreach (var task in userTasks) {
+                    if (task.DueDate == default)
+                        task.DueDate = null;
+                }
+
+                return userTasks;
             }
 
             return BadRequest();
         }
 
-        // Return globally shared for account-less
-        return await _context.ToDoTask.Where(x => !x.IsDeleted && x.UserID == default)
+        List<ToDoTaskDTO> tasks = await _context.ToDoTask.Where(x => !x.IsDeleted && x.UserID == default)
             .Select(x => _todoMapper.TodoTaskToDto(x))
             .ToListAsync();
+        foreach (var task in tasks) {
+            if (task.DueDate == default)
+                task.DueDate = null;
+        }
+
+        // Return globally shared for account-less
+        return tasks;
     }
 
     // GET: api/ToDoTask/5
@@ -71,7 +84,7 @@ public class ToDoTaskController : ControllerBase
             return NotFound();
 
         // Guard the user ID, if user is authenticated
-        if (HttpContext.User.Identity?.IsAuthenticated ?? (false || toDoTask.UserID != default)) {
+        if ((HttpContext.User.Identity?.IsAuthenticated ?? false) || toDoTask.UserID != default) {
             var user = await _userManager.FindByNameAsync(_ca.HttpContext!.User.Identity!.Name!);
             if (user == null)
                 return NotFound();
@@ -79,7 +92,11 @@ public class ToDoTaskController : ControllerBase
                 return NotFound();
         }
 
-        return Ok(_todoMapper.TodoTaskToDto(toDoTask));
+        var returnTask = _todoMapper.TodoTaskToDto(toDoTask);
+        if (toDoTask.DueDate == default)
+            returnTask.DueDate = null;
+
+        return Ok(returnTask);
     }
 
     // PUT: api/ToDoTask/5
