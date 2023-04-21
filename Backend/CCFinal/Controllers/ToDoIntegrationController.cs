@@ -64,9 +64,13 @@ public class ToDoIntegrationController : ControllerBase {
         if (task is null)
             return NotFound();
 
+        //
+        if (task.Updated >= toDoTaskDTO.Updated)
+            return BadRequest("The database object is more up to date than the sent object");
+
         toDoTaskDTO.Id = task.Id;
         toDoTaskDTO.Created = task.Created;
-        toDoTaskDTO.Updated = DateTime.UtcNow;
+        toDoTaskDTO.Updated = toDoTaskDTO.Updated;
 
         _todoMapper.TodoTaskDtoToModel(toDoTaskDTO, task);
 
