@@ -55,6 +55,7 @@
     </div>
     <TheFooter
       type="form"
+      :logged-in="loggedIn"
       :add-item="addItem"
       :canvas-login="canvasLogin"
       @toggle-form-input="toggleFormInput"
@@ -84,6 +85,12 @@ export default {
     EmptyStateDisplay,
     TodoItem,
     TheFooter
+  },
+  props: {
+    loggedIn: {
+      type: Boolean,
+      default: false
+    }
   },
   data  () {
     return {
@@ -241,7 +248,7 @@ export default {
 }
 
 .content-wrapper {
-  min-height: 480px;
+  min-height: 485px;
   max-height: 300px;
   overflow-y: scroll;
   position:relative;

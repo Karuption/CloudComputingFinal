@@ -6,6 +6,14 @@
     <div
       class="extensions-overlay"
     >
+      <div
+        class="close-icon"
+        @click="$emit('toggle-extension-display')"
+      >
+        <span class="material-symbols-outlined closer">
+          close
+        </span>
+      </div>
       <h4>Available Extensions</h4>
       <div @click="$emit('toggle-canvas-input'), $emit('toggle-extension-display')">
         <img
@@ -33,7 +41,7 @@ export default {
 
 </script>
 
-<style scroped>
+<style scoped>
 .extension-wrapper {
   position: absolute;
   width: 100%;
@@ -79,13 +87,45 @@ h4 {
   border-radius: 50%;
   font-size: 30px;
   color: white;
-  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38);
   margin-right: 10px;
   margin: 0 auto;
+  transition: all 0.3s ease;
+    box-shadow: 5px 5px 10px #e0e0e0, -5px -5px 10px #ffffff;
+  background-color: #ffffff;
+  text-align: center;
 }
 
 .canvas-icon:hover {
-  opacity: .7;
+  box-shadow: inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff;
+  cursor: pointer;
+}
+
+.close-icon {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+.closer {
+  border: none;
+  border-radius: 10px;
+  padding: 3px;
+  width: 40px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+    box-shadow: 5px 5px 10px #e0e0e0, -5px -5px 10px #ffffff;
+  background-color: #ffffff;
+  cursor: pointer;
+    background-color: #6797ff00;
+    font-size: 30px;
+    color: rgb(0, 0, 0);
+    text-align: center;
+
+}
+
+.closer:hover{
+  box-shadow: inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff;
+  cursor: pointer;
 }
 
 </style>

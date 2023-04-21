@@ -35,7 +35,7 @@
             class="close-form"
             @click="$emit('toggle-form-input')"
           >
-            <span class="material-symbols-outlined">
+            <span class="material-symbols-outlined closer">
               close
             </span>
           </div>
@@ -82,7 +82,7 @@
             class="close-form"
             @click="$emit('toggle-canvas-input')"
           >
-            <span class="material-symbols-outlined">
+            <span class="material-symbols-outlined closer">
               close
             </span>
           </div>
@@ -199,11 +199,12 @@ export default {
   font-size: 30px;
   padding: 10px;
   color: white;
-  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38);
+  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38), inset 0px 2px 2px rgba(255, 255, 255, 0.1), inset 0px -2px 2px rgba(0, 0, 0, 0.1);
 }
 
 .footer-wrapper span:hover {
   background-color: #83aaff;
+  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38), inset 0px 2px 2px rgba(255, 255, 255, 0.1), inset 0px -2px 2px rgba(0, 0, 0, 0.2);
 }
 
 .canvas-icon {
@@ -313,6 +314,7 @@ form button {
   position: absolute;
   top: 10px;
   right: 10px;
+  text-align: center;
 }
 
 .close-form span{
@@ -335,11 +337,12 @@ form button {
   font-size: 30px;
   padding: 10px;
   color: white;
-  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38);
+  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38), inset 0px 2px 2px rgba(255, 255, 255, 0.1), inset 0px -2px 2px rgba(0, 0, 0, 0.1);
 }
 
 .form-submit span:hover {
   background-color: #83aaff;
+  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38), inset 0px 2px 2px rgba(255, 255, 255, 0.1), inset 0px -2px 2px rgba(0, 0, 0, 0.2);
 }
 
 .form-submit {
@@ -350,5 +353,21 @@ form button {
 .canvas-label {
   margin-bottom: 10px;
   margin-top: 25px;
+}
+
+.closer {
+  border: none;
+  border-radius: 10px;
+  padding: 3px;
+  width: 40px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+    box-shadow: 5px 5px 10px #e0e0e0, -5px -5px 10px #ffffff;
+  background-color: #ffffff;
+}
+
+.closer:hover{
+  box-shadow: inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff;
+  cursor: pointer;
 }
 </style>

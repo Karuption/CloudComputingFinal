@@ -92,21 +92,22 @@ export default {
 </script>
 
 <style scoped>
-  strong {
-    background-color: #fd987a;
-    color: white;
-    padding: 1px;
-    font-weight: normal;
-    font-size: 10px;
-    padding-right: 6px;
-    padding-left: 6px;
-    margin-left: 3px;
-    border-radius: 2px;
-  }
+strong {
+  background-color: #e0e5ec00;
+  color: #5C5C5C;
+  padding: 0px;
+  font-weight: normal;
+  font-size: 10px;
+  padding-right: 6px;
+  padding-left: 6px;
+  margin-left: 3px;
+  border-radius: 2px;
+  box-shadow: 2px 2px 6px #C6CDD6, -2px -2px 6px #F1F5FA;
+}
 
-  .background-grey {
-    background-color: gray;
-  }
+.background-grey {
+  background-color: gray;
+}
 
 .header {
   display: flex;

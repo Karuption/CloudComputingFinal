@@ -1,15 +1,28 @@
 <template>
   <div>
-    <TodoList />
+    <UserLogin @user-logged-in="toggleLogin" />
+    <TodoList :logged-in="loggedIn" />
   </div>
 </template>
 
 <script>
 import TodoList from './components/TodoList.vue'
+import UserLogin from './components/UI/UserLogin.vue'
 
 export default {
   components: {
-    TodoList
+    TodoList,
+    UserLogin
+  },
+  data () {
+    return {
+      loggedIn: false
+    }
+  },
+  methods: {
+    toggleLogin () {
+      this.loggedIn = true
+    }
   }
 }
 </script>
