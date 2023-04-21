@@ -12,6 +12,10 @@
 import TodoList from './components/TodoList.vue'
 import UserLogin from './components/UI/UserLogin.vue'
 
+// decode the username from the token saved in local storage and set that to the username data on mount
+// format the links coming from canvas api tasks
+// make that extension page horizontally scrollable if it gets large enough
+
 export default {
   components: {
     TodoList,

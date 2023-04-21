@@ -112,6 +112,11 @@ export default {
       accessToken: ''
     }
   },
+  watch: {
+    loggedIn: function (newVal, oldVal) {
+      this.loadBackendData()
+    }
+  },
   updated () {
     this.loadTippySettings()
   },
@@ -121,7 +126,11 @@ export default {
   },
   methods: {
     loadBackendData () {
-      axios.get('http://localhost:5000/api/ToDoTask')
+      axios.get('http://localhost:5000/api/ToDoTask', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
         .then(response => {
           this.tasks = response.data
         })
@@ -169,7 +178,11 @@ export default {
     },
     removeTask (index) {
       const taskId = this.tasks[index].id
-      axios.delete(`http://localhost:5000/api/ToDoTask/${taskId}`)
+      axios.delete(`http://localhost:5000/api/ToDoTask/${taskId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
         .then(response => {
           this.tasks.splice(index, 1)
         })
@@ -181,12 +194,19 @@ export default {
       const task = this.tasks[index]
       task.isFavorite = !task.isFavorite
       const taskId = task.id
-      axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task)
-        .then(response => {
+
+      if (this.loggedIn) {
+        axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
         })
-        .catch(error => {
-          console.log(error)
-        })
+          .then(response => {
+          })
+          .catch(error => {
+            console.log(error)
+          })
+      }
     },
     showTodo () {
       this.todoList = true
@@ -201,7 +221,11 @@ export default {
       const task = this.tasks[index]
       task.isCompleted = !task.isCompleted
       const taskId = task.id
-      axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task)
+      axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
         .then(response => {
         })
         .catch(error => {
