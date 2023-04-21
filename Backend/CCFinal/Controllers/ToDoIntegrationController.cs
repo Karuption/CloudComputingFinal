@@ -145,7 +145,7 @@ public class ToDoIntegrationController : ControllerBase {
         if (toDoTask == null)
             return NotFound();
 
-        _context.ToDoTask.Remove(toDoTask);
+        toDoTask.IsDeleted = true;
         await _context.SaveChangesAsync();
 
         return NoContent();
