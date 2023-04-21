@@ -124,6 +124,7 @@ export default {
       axios.get('http://localhost:5000/api/ToDoTask')
         .then(response => {
           this.tasks = response.data
+          console.log(response)
         })
         .catch(error => {
           console.log(error)
@@ -149,8 +150,22 @@ export default {
         })
       this.toggleFormInput()
     },
-    submitCanvasFormDetails () {
-      console.log('submitted canvas login')
+    async submitCanvasFormDetails (formData) {
+      if (this.loggedIn) {
+        try {
+          const response = await axios.post('http://localhost:5000/api/Authenticate/add-CanvasKey', {
+            canvasUrl: formData.canvasUrl,
+            accessToken: formData.accessToken
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+          console.log(response)
+        } catch (error) {
+          console.error(error)
+        }
+      }
     },
     removeTask (index) {
       const taskId = this.tasks[index].id

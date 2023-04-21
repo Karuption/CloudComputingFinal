@@ -23,7 +23,7 @@
         <span
           v-if="!loggedIn"
           class="material-symbols-outlined blue-circle tip right"
-          :data-tippy-content="'Login For Extensions'"
+          :data-tippy-content="'Login To Add Extensions'"
         >api</span>
       </div>
       <div @click="$emit('toggle-form-input')">
@@ -86,8 +86,9 @@
         class="form-wrapper"
         @click.self="$emit('toggle-canvas-input')"
       >
-        <h4>Login Through Canvas</h4>
-        <form @submit.prevent="$emit('submit-canvas=form-details'), resetUserInputs('canvas')">
+        <h4>Import Canvas Tasks</h4>
+        <p>This import should take around 5 minutes to complete</p>
+        <form @submit.prevent="$emit('submit-canvas-form-details', { canvasUrl: canvasUrl, accessToken: accessToken }), resetUserInputs('canvas')">
           <div
             class="close-form"
             @click="$emit('toggle-canvas-input')"
@@ -285,6 +286,15 @@ export default {
   font-size: 25px;
   top: 220px;
   color: #6798ff;
+  font-weight: normal;
+}
+
+.form-wrapper p {
+  margin: 0 auto;
+  position: absolute;
+  z-index: 10000;
+  font-size: 13px;
+  top: 260px;
   font-weight: normal;
 }
 

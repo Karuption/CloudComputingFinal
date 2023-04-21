@@ -43,7 +43,7 @@
             >
             <button
               type="button"
-              class="password-toggle-btn right"
+              class="password-toggle-btn-two right"
               @click="togglePasswordVisibility('old')"
             >
               <span
@@ -65,7 +65,7 @@
             >
             <button
               type="button"
-              class="password-toggle-btn right"
+              class="password-toggle-btn-two right"
               @click="togglePasswordVisibility('new')"
             >
               <span
@@ -350,6 +350,9 @@ export default {
       if (token) {
         this.loggedIn = true
       }
+    },
+    closeProfilePage () {
+      this.profilePage = false
     }
   }
 }
@@ -591,21 +594,28 @@ input:focus {
 
 .password-toggle-btn {
   position: absolute;
-  top: 50%;
-  right: 8px;
+  top: 58%;
+  right: 0px;
   transform: translateY(-50%);
   background: transparent;
   border: none;
   cursor: pointer;
 }
 
-.right {
+.password-toggle-btn-two {
+  position: absolute;
   top: 75%;
+  right: 18px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  justify-content: right;
+  max-width: 10px;
 }
 
 .icon {
   position: relative;
-  right: -65px;
 }
 
 .password-toggle-icon {
@@ -658,10 +668,13 @@ input:focus {
   padding: 3px;
   width: 300px;
   font-size: 12px;
-  transition: all 0.3s ease;
   box-shadow: inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff;
   background-color: #ffffff;
   text-align: left;
+}
+
+.profile-page form input:focus {
+  outline: 2px solid #6798ff;
 }
 
 .profile-page form button[type="submit"],
