@@ -188,11 +188,11 @@ public class AuthenticateController : ControllerBase {
         _logger.LogInformation($"""
             Received CanvasAPI model:
                 {model.AccessToken}
-                {model.CavasUrl}
+                {model.CanvasUrl}
             """);
 
         await _capPublisher.PublishAsync("Integration.Canvas",
-            new IntegrationCanvas(user.Id, model.AccessToken, model.CavasUrl),
+            new IntegrationCanvas(user.Id, model.AccessToken, model.CanvasUrl),
             new Dictionary<string, string> { { KafkaHeaders.KafkaKey, user.Id } }!,
             cancellationToken);
 
