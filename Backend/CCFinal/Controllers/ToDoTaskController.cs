@@ -197,14 +197,14 @@ public class ToDoTaskController : ControllerBase
             return NotFound();
 
         // Check if that user created that task
-        if (_ca?.HttpContext?.User?.Identity?.IsAuthenticated ?? (false || toDoTask.UserID != default)) {
+        if ((_ca?.HttpContext?.User?.Identity?.IsAuthenticated ?? false) || toDoTask.UserID != default) {
             var user = await _userManager.FindByNameAsync(_ca.HttpContext.User.Identity.Name);
             if (user is null || toDoTask.UserID != Guid.Parse(user.Id))
                 return NotFound();
         }
 
         // Checking if it is an integration task
-        if (string.IsNullOrWhiteSpace(toDoTask.IntegrationId)) {
+        if (!string.IsNullOrWhiteSpace(toDoTask.IntegrationId)) {
             toDoTask.IsDeleted = true;
             await _context.SaveChangesAsync();
             return Ok();
