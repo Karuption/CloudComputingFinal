@@ -287,36 +287,103 @@ export default {
       this.signupForm = !this.signupForm
     },
     async loginHandler () {
-      if (this.username !== '' && this.password !== '') {
-        try {
-          const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
-            username: this.username,
-            password: this.password
-          })
-          console.log(response)
-          if (response.data.token) {
-            localStorage.setItem('token', response.data.token)
-            this.loggedIn = true
-            this.toggleLoginModule()
-            this.$emit('user-logged-in')
-          } else {
-            // display error message
+      if (this.loggedIn) {
+        if (this.username !== '' && this.password !== '') {
+          try {
+            const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
+              username: this.username,
+              password: this.password
+            }, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+              }
+            })
+            console.log(response)
+            if (response.data.token) {
+              localStorage.setItem('token', response.data.token)
+              this.loggedIn = true
+              this.toggleLoginModule()
+              this.$emit('user-logged-in')
+            } else {
+              // display error message
+            }
+          } catch (error) {
+            console.log(error)
           }
-        } catch (error) {
-          console.log(error)
+        }
+      } else {
+        if (this.loggedIn) {
+          try {
+            const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
+              username: this.username,
+              password: this.password
+            }, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+              }
+            })
+            console.log(response)
+            if (response.data.token) {
+              localStorage.setItem('token', response.data.token)
+              this.loggedIn = true
+              this.toggleLoginModule()
+              this.$emit('user-logged-in')
+            } else {
+              // display error message
+            }
+          } catch (error) {
+            console.log(error)
+          }
+        } else {
+          if (this.username !== '' && this.password !== '') {
+            try {
+              const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
+                username: this.username,
+                password: this.password
+              })
+              console.log(response)
+              if (response.data.token) {
+                localStorage.setItem('token', response.data.token)
+                this.loggedIn = true
+                this.toggleLoginModule()
+                this.$emit('user-logged-in')
+              } else {
+                // display error message
+              }
+            } catch (error) {
+              console.log(error)
+            }
+          }
         }
       }
     },
     async registrationHandler () {
-      try {
-        const response = await axios.post('http://localhost:5000/api/Authenticate/register', {
-          username: this.username,
-          password: this.password
-        })
-        console.log(response.data)
-        this.toggleForm()
-      } catch (error) {
-        console.error(error)
+      if (this.loggedIn) {
+        try {
+          const response = await axios.post('http://localhost:5000/api/Authenticate/register', {
+            username: this.username,
+            password: this.password
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+          console.log(response.data)
+          this.toggleForm()
+        } catch (error) {
+          console.error(error)
+        }
+      } else {
+        try {
+          const response = await axios.post('http://localhost:5000/api/Authenticate/register', {
+            username: this.username,
+            password: this.password
+          })
+          console.log(response.data)
+          this.toggleForm()
+        } catch (error) {
+          console.error(error)
+        }
       }
     },
     async changePasswordHandler () {

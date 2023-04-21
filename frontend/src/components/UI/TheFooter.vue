@@ -23,7 +23,7 @@
         <span
           v-if="!loggedIn"
           class="material-symbols-outlined blue-circle tip right"
-          :data-tippy-content="'Login To Add Extensions'"
+          :data-tippy-content="'Login for Extensions'"
         >api</span>
       </div>
       <div @click="$emit('toggle-form-input')">

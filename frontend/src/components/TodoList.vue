@@ -124,7 +124,6 @@ export default {
       axios.get('http://localhost:5000/api/ToDoTask')
         .then(response => {
           this.tasks = response.data
-          console.log(response)
         })
         .catch(error => {
           console.log(error)
@@ -162,6 +161,7 @@ export default {
             }
           })
           console.log(response)
+          this.canvasLogin = !this.canvasLogin
         } catch (error) {
           console.error(error)
         }
