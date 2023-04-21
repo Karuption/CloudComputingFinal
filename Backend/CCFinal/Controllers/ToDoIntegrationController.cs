@@ -70,7 +70,8 @@ public class ToDoIntegrationController : ControllerBase {
 
         toDoTaskDTO.Id = task.Id;
         toDoTaskDTO.Created = task.Created;
-        toDoTaskDTO.Updated = toDoTaskDTO.Updated;
+        toDoTaskDTO.IsFavorite = task.IsFavorite;
+        toDoTaskDTO.IsCompleted = task.IsCompleted;
 
         _todoMapper.TodoTaskDtoToModel(toDoTaskDTO, task);
 
@@ -145,7 +146,9 @@ public class ToDoIntegrationController : ControllerBase {
         if (toDoTask == null)
             return NotFound();
 
+        //Don't delete the object as the system will create a new if the integration fires again on this id
         toDoTask.IsDeleted = true;
+        toDoTask.Updated = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();
