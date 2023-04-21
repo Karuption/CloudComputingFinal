@@ -3,5 +3,6 @@
 public enum TaskType {
     Task,
     Quiz,
-    Assignment
+    Assignment,
+    Discussion
 }
