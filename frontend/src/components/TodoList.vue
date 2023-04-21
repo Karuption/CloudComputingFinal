@@ -28,6 +28,7 @@
           />
         </div>
         <TheFooter
+          :logged-in="loggedIn"
           type="buttons"
           :add-item="addItem"
           :canvas-login="canvasLogin"

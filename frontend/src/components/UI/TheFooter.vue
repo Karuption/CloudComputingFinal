@@ -2,6 +2,7 @@
   <div>
     <div v-if="showExtensions">
       <ExtensionViewer
+        :logged-in="loggedIn"
         @toggle-extension-display="extensionsViewToggle"
         @toggle-canvas-input="$emit('toggle-canvas-input')"
       />
@@ -10,10 +11,19 @@
       v-if="type==='buttons'"
       class="footer-wrapper"
     >
-      <div @click="extensionsViewToggle()">
+      <div
+        :class="{ 'disabled': !loggedIn }"
+        @click="extensionsViewToggle()"
+      >
         <span
+          v-if="loggedIn"
           class="material-symbols-outlined blue-circle tip right"
-          data-tippy-content="Extensions"
+          :data-tippy-content="'Extensions'"
+        >api</span>
+        <span
+          v-if="!loggedIn"
+          class="material-symbols-outlined blue-circle tip right"
+          :data-tippy-content="'Login For Extensions'"
         >api</span>
       </div>
       <div @click="$emit('toggle-form-input')">
@@ -72,7 +82,7 @@
         </form>
       </div>
       <div
-        v-if="canvasLogin===true"
+        v-if="canvasLogin===true && loggedIn===true"
         class="form-wrapper"
         @click.self="$emit('toggle-canvas-input')"
       >
@@ -137,6 +147,10 @@ export default {
     type: {
       type: String,
       required: true
+    },
+    loggedIn: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -173,7 +187,9 @@ export default {
       }
     },
     extensionsViewToggle () {
-      this.showExtensions = !this.showExtensions
+      if (this.loggedIn) {
+        this.showExtensions = !this.showExtensions
+      }
     }
   }
 }
@@ -369,5 +385,15 @@ form button {
 .closer:hover{
   box-shadow: inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff;
   cursor: pointer;
+}
+
+.disabled span {
+    color: #ffffff;
+    background-color: #e0e0e0;
+  }
+.disabled span:hover{
+  background-color: #e0e0e0;
+  box-shadow: 0px 5px 10px 0px rgba(156, 156, 156, 0.38), inset 0px 2px 2px rgba(255, 255, 255, 0.1), inset 0px -2px 2px rgba(0, 0, 0, 0.2);
+  cursor:default;
 }
 </style>

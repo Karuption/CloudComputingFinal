@@ -255,6 +255,10 @@ export default {
   mounted () {
     this.loadTippySettings()
     this.checkToken()
+
+    if (this.loggedIn) {
+      this.$emit('user-logged-in')
+    }
   },
   methods: {
     loadTippySettings () {
@@ -339,6 +343,7 @@ export default {
       this.profilePage = false
       this.username = ''
       this.password = ''
+      this.$emit('user-logged-out')
     },
     checkToken () {
       const token = localStorage.getItem('token')

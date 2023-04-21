@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="loggedIn"
     class="extension-wrapper"
     @click.self="$emit('toggle-extension-display')"
   >
@@ -30,6 +31,15 @@
 import tippy from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 export default {
+  props: {
+    loggedIn: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data () {
+    return {}
+  },
   mounted () {
     tippy('.can', {
       theme: 'custom',

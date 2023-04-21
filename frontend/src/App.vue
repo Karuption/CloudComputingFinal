@@ -1,6 +1,9 @@
 <template>
   <div>
-    <UserLogin @user-logged-in="toggleLogin" />
+    <UserLogin
+      @user-logged-in="toggleLogin"
+      @user-logged-out="toggleLogin"
+    />
     <TodoList :logged-in="loggedIn" />
   </div>
 </template>
@@ -21,7 +24,7 @@ export default {
   },
   methods: {
     toggleLogin () {
-      this.loggedIn = true
+      this.loggedIn = !this.loggedIn
     }
   }
 }
