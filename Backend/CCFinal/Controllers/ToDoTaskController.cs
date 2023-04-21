@@ -113,9 +113,10 @@ public class ToDoTaskController : ControllerBase
 
         // Fetch task by User ID or globally shared, return not found otherwise
         var dbTask = await _context.ToDoTask.FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == id);
-        if (dbTask is null || (dbTask.UserID != default && _ca.HttpContext.User.Identity.IsAuthenticated))
+        if (dbTask is null ||
+            (dbTask.UserID != default && !(_ca?.HttpContext?.User.Identity?.IsAuthenticated ?? false)))
             return NotFound();
-        if (_ca?.HttpContext?.User.Identity?.IsAuthenticated ?? (false || dbTask.UserID != default)) {
+        if ((_ca?.HttpContext?.User.Identity?.IsAuthenticated ?? false) || dbTask.UserID != default) {
             var user = await _userManager.FindByNameAsync(_ca.HttpContext.User.Identity.Name);
             if (user is null || dbTask.UserID != Guid.Parse(user.Id))
                 return NotFound();
