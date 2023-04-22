@@ -12,7 +12,7 @@ public class Cleanup : BackgroundService {
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-        using var scope = _serviceProvider.CreateAsyncScope();
+        await using var scope = _serviceProvider.CreateAsyncScope();
 
         while (!stoppingToken.IsCancellationRequested) {
             var context = scope.ServiceProvider.GetService<CanvasIntegrationDbContext>();
@@ -20,15 +20,17 @@ public class Cleanup : BackgroundService {
                 continue;
 
             await CleanupLocks(context, TimeSpan.FromMinutes(10), stoppingToken);
-
-            List<UserInformation> users =
-                await context.Information.Where(x => x.Token == "").ToListAsync(stoppingToken);
-            if (users.Any()) {
-                context.RemoveRange(users);
-                await context.SaveChangesAsync(stoppingToken);
-            }
-
+            await CleanupEmptyTokens(context, stoppingToken);
             await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+        }
+    }
+
+    private async Task CleanupEmptyTokens(CanvasIntegrationDbContext context, CancellationToken stoppingToken) {
+        List<UserInformation> users =
+            await context.Information.Where(x => x.Token == "").ToListAsync(stoppingToken);
+        if (users.Any()) {
+            context.RemoveRange(users);
+            await context.SaveChangesAsync(stoppingToken);
         }
     }
 

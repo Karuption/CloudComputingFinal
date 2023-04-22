@@ -56,6 +56,7 @@ public class KeyUpdate : ICapSubscribe, IKeyUpdate {
                 result.LastRunDateTime = new DateTime();
                 result.LastRunDateTime = DateTime.UtcNow.Subtract(TimeSpan.FromDays(defaultInitSearchDays));
             }
+
             await _dbContext.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"Processed Message for User: {model.UserId}");
         }

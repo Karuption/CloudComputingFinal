@@ -57,36 +57,15 @@ public class CanvasService : ICanvasService {
         if (string.IsNullOrWhiteSpace(userInfo.Token))
             return;
 
-        var user = await LockRow(userInfo, userInfo, stoppingToken);
+        var user = await LockRow(userInfo, stoppingToken);
         if (user is null)
             return;
 
-        // Preparing and sending external API request
-        var request = new HttpRequestMessage(HttpMethod.Post, "graphql");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
-        request.Content = new StringContent(_requestString, null, MediaTypeNames.Application.Json);
+        Course[] courses = await GetCourses(user, stoppingToken);
+        await ProcessCourses(user, courses, stoppingToken);
+    }
 
-        var response = await _client.SendAsync(request, stoppingToken);
-
-        // Handling API request failure
-        if (!response.IsSuccessStatusCode) {
-            _logger.LogDebug(
-                $"""
-                            User ID: {user.UserID} 
-                            Response code: {response.StatusCode} 
-                            Reason: {response.ReasonPhrase ?? ""} 
-                            Content: {await response.Content.ReadAsStringAsync(stoppingToken)}
-                        """);
-            return;
-        }
-
-        var data = await response.Content.ReadFromJsonAsync<Data>((JsonSerializerOptions?)default, stoppingToken);
-        if (data is null) {
-            _logger.LogDebug("Unable to unpack request");
-            return;
-        }
-
-        Course[] courses = data?.data?.allCourses ?? Array.Empty<Course>();
+    private async Task ProcessCourses(UserInformation user, Course[] courses, CancellationToken stoppingToken) {
         user.LastRunDateTime = DateTime.UtcNow;
 
         // publishing updated courses wrapped in a transaction for event consistency
@@ -114,7 +93,7 @@ public class CanvasService : ICanvasService {
                                 stoppingToken); //Key is the Integration ID + user id 
 
                             user!.LastCanvasUpdateDateTime =
-                                userInfo.LastCanvasUpdateDateTime.MaxDateTime(assignment.UpdatedAt);
+                                user.LastCanvasUpdateDateTime.MaxDateTime(assignment.UpdatedAt);
                             _logger.LogInformation($"""
                         Updated Course for user {user.UserID} Name: {course.Name}
                             Assignment Name: {assignment.Name}
@@ -141,13 +120,39 @@ public class CanvasService : ICanvasService {
         }
     }
 
-    private async Task<UserInformation?> LockRow(UserInformation userInfo, UserInformation user,
-        CancellationToken stoppingToken = new()) {
+    private async Task<Course[]> GetCourses(UserInformation user, CancellationToken stoppingToken = new()) {
+        // Preparing and sending external API request
+        var request = new HttpRequestMessage(HttpMethod.Post, "graphql");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
+        request.Content = new StringContent(_requestString, null, MediaTypeNames.Application.Json);
+
+        var response = await _client.SendAsync(request, stoppingToken);
+
+        // Handling API request failure
+        if (!response.IsSuccessStatusCode) {
+            _logger.LogDebug(
+                $"""
+                            User ID: {user.UserID} 
+                            Response code: {response.StatusCode} 
+                            Reason: {response.ReasonPhrase ?? ""} 
+                            Content: {await response.Content.ReadAsStringAsync(stoppingToken)}
+                        """);
+            return Array.Empty<Course>();
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<Data>((JsonSerializerOptions?)default, stoppingToken);
+        if (data is null)
+            _logger.LogDebug("Unable to unpack request");
+
+        return data?.data?.allCourses ?? Array.Empty<Course>();
+    }
+
+    private async Task<UserInformation?> LockRow(UserInformation userInfo, CancellationToken stoppingToken = new()) {
         // simple lock to allow for concurrency
         // double processing is not an issue, just trying to save round trips to the slow external API 
-        user = await _dbContext.Information.FirstOrDefaultAsync(x => x.UserID == userInfo.UserID &&
-                                                                     x.LockTime == null &&
-                                                                     x.Token != "", stoppingToken);
+        var user = await _dbContext.Information.FirstOrDefaultAsync(x => x.UserID == userInfo.UserID &&
+                                                                         x.LockTime == null &&
+                                                                         x.Token != "", stoppingToken);
         if (user is null)
             return null;
 
