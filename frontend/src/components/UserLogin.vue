@@ -262,7 +262,6 @@ export default {
       if (newValue) {
         this.startTokenExpirationTimer()
       } else {
-        console.log('timer ended')
         this.stopTokenExpirationTimer()
       }
     }
@@ -442,7 +441,6 @@ export default {
         const expirationTime = decodedToken.exp * 1000 // convert expiration time to milliseconds
         const currentTime = new Date().getTime() // get current time in milliseconds
         const timeLeft = expirationTime - currentTime // calculate time left until expiration
-        console.log('time left', timeLeft)
 
         this.tokenExpirationTimer = setTimeout(() => {
           localStorage.removeItem('token')

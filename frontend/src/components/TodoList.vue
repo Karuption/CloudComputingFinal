@@ -153,7 +153,11 @@ export default {
       if (!this.newTask.dueDate) {
         this.newTask.dueDate = null
       }
-      axios.post('http://localhost:5000/api/ToDoTask', this.newTask)
+      axios.post('http://localhost:5000/api/ToDoTask', this.newTask, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
         .then(response => {
           console.log(response.data)
           this.tasks.push(response.data)
