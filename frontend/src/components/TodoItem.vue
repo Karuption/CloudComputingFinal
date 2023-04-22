@@ -16,7 +16,7 @@
             @mouseenter="$emit('set-checked', index)"
             @mouseleave="$emit('remove-checked', index)"
           >
-            {{ isChecked[index] ? 'check' : 'circle' }}
+            {{ isChecked[index] ? '&#xe5ca;' : '&#xef4a;' }}
           </span>
           <div
             v-if="fullDisplay[index] !== false"
@@ -29,10 +29,21 @@
               <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ convertToRegularTime(task.created) }}</span>
               <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ convertToRegularTime(task.dueDate) }}</span>
               <span v-if="fullDisplay[index] !==true && task.dueDate != null">Due Date: {{ formatDate(task.dueDate) }}</span>
-              <span v-if="fullDisplay[index]"><br><strong>Description: </strong>{{ task.description }}</span>
-              <!--
-                  <span v-if="fullDisplay[index]"><br><strong>Updated: </strong>{{ task.updated }}</span>
-                  -->
+              <span v-if="fullDisplay[index]">
+                <br>
+                <strong>Description: </strong>
+                <span v-if="convertStringToLink(task.description).isLink">
+                  <button
+                    class="open-btn"
+                    @click="openLink(convertStringToLink(task.description).link)"
+                  >
+                    View Description
+                  </button>
+                </span>
+                <span v-else>
+                  {{ convertStringToLink(task.description).link }}
+                </span>
+              </span>
             </div>
           </div>
           <div
@@ -40,13 +51,13 @@
             class="icons"
           >
             <div @click="$emit('remove-task', index)">
-              <span class="material-symbols-outlined delete">delete</span>
+              <span class="material-symbols-outlined delete">&#xe872;</span>
             </div>
             <div @click="$emit('toggle-favorite', index)">
               <span
                 class="material-symbols-outlined"
                 :class="['favorite', { active: task.isFavorite }]"
-              >favorite</span>
+              >&#xe87d;</span>
             </div>
           </div>
         </div>
@@ -63,7 +74,7 @@
             @mouseenter="$emit('set-checked', index)"
             @mouseleave="$emit('remove-checked', index)"
           >
-            {{ isChecked[index] ? 'circle' : 'check' }}
+            {{ isChecked[index] ? '&#xef4a;' : '&#xe5ca;' }}
           </span>
           <div
             v-if="fullDisplay[index] !== false"
@@ -75,10 +86,21 @@
               <strong><span v-if="fullDisplay[index]">{{ task.title }}</span></strong>
               <span v-if="fullDisplay[index]"><strong>Created: </strong>{{ convertToRegularTime(task.created) }}</span>
               <span v-if="fullDisplay[index]"><strong>Due Date: </strong>{{ convertToRegularTime(task.dueDate) }}</span>
-              <span v-if="fullDisplay[index]"><br><strong>Description: </strong>{{ task.description }}</span>
-              <!--
-                  <span v-if="fullDisplay[index]"><br><strong>Updated: </strong>{{ task.updated }}</span>
-                  -->
+              <span v-if="fullDisplay[index]">
+                <br>
+                <strong>Description: </strong>
+                <span v-if="convertStringToLink(task.description).isLink">
+                  <button
+                    class="open-btn"
+                    @click="openLink(convertStringToLink(task.description).link)"
+                  >
+                    View Description
+                  </button>
+                </span>
+                <span v-else>
+                  {{ convertStringToLink(task.description).link }}
+                </span>
+              </span>
             </div>
           </div>
           <div
@@ -86,13 +108,13 @@
             class="icons"
           >
             <div @click="$emit('remove-task', index)">
-              <span class="material-symbols-outlined delete">delete</span>
+              <span class="material-symbols-outlined delete">&#xe872;</span>
             </div>
             <div @click="$emit('toggle-favorite', index)">
               <span
                 class="material-symbols-outlined"
                 :class="['favorite', { active: task.isFavorite }]"
-              >favorite</span>
+              >&#xe87d;</span>
             </div>
           </div>
         </div>
@@ -122,6 +144,12 @@ export default {
       required: true
     }
   },
+  data () {
+    return {
+      isLink: false,
+      link: ''
+    }
+  },
   methods: {
     formatDate (date) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit' }
@@ -137,6 +165,24 @@ export default {
       const ampm = date.getHours() >= 12 ? 'pm' : 'am'
       const formattedTime = `${month}/${day}/${year} at ${hour}:${minute} ${ampm}`
       return formattedTime
+    },
+    convertStringToLink (description) {
+      if (description.startsWith('https')) {
+        return {
+          isLink: true,
+          link: description
+        }
+      } else {
+        return {
+          isLink: false,
+          link: description
+        }
+      }
+    },
+    openLink (url) {
+      if (typeof window !== 'undefined') {
+        window.open(url, '_blank')
+      }
     }
   }
 }
@@ -245,4 +291,22 @@ export default {
   cursor: pointer;
   font-weight: normal;
 }
+
+.open-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  text-align: center;
+  color: #6798ff;
+  background-color: rgba(255, 255, 255, 0);
+  margin-left: 5px;
+}
+
+.open-btn:hover {
+  box-shadow: inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff;
+  cursor: pointer;
+}
+
 </style>

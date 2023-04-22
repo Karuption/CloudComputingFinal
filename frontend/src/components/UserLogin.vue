@@ -2,7 +2,7 @@
   <div>
     <div class="login-wrapper">
       <button
-        v-if="loggedIn === false"
+        v-if="isLoggedIn === false"
         class="login-btn top"
         data-tippy-content="Login / Sign Up"
         @click="toggleLoginModule"
@@ -10,7 +10,7 @@
         <span
           class="material-symbols-outlined "
         >
-          person_add
+          &#xe7fe;
         </span>
       </button>
       <button
@@ -19,19 +19,20 @@
         @click="showProfileModule"
       >
         <span
-          v-if="loggedIn === true"
+          v-if="isLoggedIn === true"
           class="material-symbols-outlined"
         >
-          person
+          &#xe7fd;
         </span>
       </button>
       <div
         v-if="profilePage"
         class="profile-page"
       >
-        <h3>{{ username }}</h3>
+        <h3><strong>Welcome back </strong>{{ username }}</h3>
         <form @submit.prevent="changePasswordHandler">
           <div class="cont password-input-wrapper">
+            <h5>Change Your Password</h5>
             <label for="old-password">Old Password</label>
             <input
               id="old-password"
@@ -49,7 +50,7 @@
               <span
                 class="material-symbols-outlined password-toggle-icon icon"
               >
-                {{ showOldPassword ? 'visibility_off' : 'visibility' }}
+                {{ showOldPassword ? '&#xe8f5;' : '&#xe8f4;' }}
               </span>
             </button>
           </div>
@@ -65,13 +66,13 @@
             >
             <button
               type="button"
-              class="password-toggle-btn-two right"
+              class="password-toggle-btn-two right upper"
               @click="togglePasswordVisibility('new')"
             >
               <span
                 class="material-symbols-outlined password-toggle-icon icon"
               >
-                {{ showNewPassword ? 'visibility_off' : 'visibility' }}
+                {{ showNewPassword ? '&#xe8f5;' : '&#xe8f4;' }}
               </span>
             </button>
           </div>
@@ -106,7 +107,7 @@
           @click="toggleLoginModule"
         >
           <span class="material-symbols-outlined closer">
-            close
+            &#xe5cd;
           </span>
         </div>
         <label
@@ -139,7 +140,7 @@
             <span
               class="material-symbols-outlined password-toggle-icon"
             >
-              {{ showPassword ? 'visibility_off' : 'visibility' }}
+              {{ showOldPassword ? '&#xe8f5;' : '&#xe8f4;' }}
             </span>
           </button>
         </div>
@@ -173,7 +174,7 @@
           @click="toggleLoginModule"
         >
           <span class="material-symbols-outlined closer">
-            close
+            &#xe5cd;
           </span>
         </div>
         <label
@@ -206,7 +207,7 @@
             <span
               class="material-symbols-outlined password-toggle-icon"
             >
-              {{ showPassword ? 'visibility_off' : 'visibility' }}
+              {{ showOldPassword ? '&#xe8f5;' : '&#xe8f4;' }}
             </span>
           </button>
         </div>
@@ -236,27 +237,41 @@ import axios from 'axios'
 import tippy from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 
+// eslint-disable-next-line camelcase
+import jwt_decode from 'jwt-decode'
+
 export default {
-  data  () {
+  data () {
     return {
-      loggedIn: false,
-      loginForm: false,
-      signupForm: false,
-      profilePage: false,
-      showPassword: false,
       username: '',
       password: '',
       oldPassword: '',
       newPassword: '',
+      isLoggedIn: false,
+      loginForm: false,
+      signupForm: false,
+      profilePage: false,
+      showPassword: false,
       showOldPassword: false,
-      showNewPassword: false
+      showNewPassword: false,
+      tokenExpirationTimer: null
+    }
+  },
+  watch: {
+    isLoggedIn (newValue) {
+      if (newValue) {
+        this.startTokenExpirationTimer()
+      } else {
+        console.log('timer ended')
+        this.stopTokenExpirationTimer()
+      }
     }
   },
   mounted () {
     this.loadTippySettings()
     this.checkToken()
 
-    if (this.loggedIn) {
+    if (this.isLoggedIn) {
       this.$emit('user-logged-in')
     }
   },
@@ -287,7 +302,7 @@ export default {
       this.signupForm = !this.signupForm
     },
     async loginHandler () {
-      if (this.loggedIn) {
+      if (this.isLoggedIn) {
         if (this.username !== '' && this.password !== '') {
           try {
             const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
@@ -301,7 +316,7 @@ export default {
             console.log(response)
             if (response.data.token) {
               localStorage.setItem('token', response.data.token)
-              this.loggedIn = true
+              this.isLoggedIn = true
               this.toggleLoginModule()
               this.$emit('user-logged-in')
             } else {
@@ -312,7 +327,7 @@ export default {
           }
         }
       } else {
-        if (this.loggedIn) {
+        if (this.isLoggedIn) {
           try {
             const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
               username: this.username,
@@ -325,7 +340,7 @@ export default {
             console.log(response)
             if (response.data.token) {
               localStorage.setItem('token', response.data.token)
-              this.loggedIn = true
+              this.isLoggedIn = true
               this.toggleLoginModule()
               this.$emit('user-logged-in')
             } else {
@@ -344,7 +359,7 @@ export default {
               console.log(response)
               if (response.data.token) {
                 localStorage.setItem('token', response.data.token)
-                this.loggedIn = true
+                this.isLoggedIn = true
                 this.toggleLoginModule()
                 this.$emit('user-logged-in')
               } else {
@@ -358,7 +373,7 @@ export default {
       }
     },
     async registrationHandler () {
-      if (this.loggedIn) {
+      if (this.isLoggedIn) {
         try {
           const response = await axios.post('http://localhost:5000/api/Authenticate/register', {
             username: this.username,
@@ -406,7 +421,7 @@ export default {
     },
     signOut () {
       localStorage.removeItem('token')
-      this.loggedIn = false
+      this.isLoggedIn = false
       this.profilePage = false
       this.username = ''
       this.password = ''
@@ -415,8 +430,28 @@ export default {
     checkToken () {
       const token = localStorage.getItem('token')
       if (token) {
-        this.loggedIn = true
+        const decodedToken = jwt_decode(token)
+        this.username = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']
+        this.isLoggedIn = true
       }
+    },
+    startTokenExpirationTimer () {
+      const token = localStorage.getItem('token')
+      if (token) {
+        const decodedToken = jwt_decode(token)
+        const expirationTime = decodedToken.exp * 1000 // convert expiration time to milliseconds
+        const currentTime = new Date().getTime() // get current time in milliseconds
+        const timeLeft = expirationTime - currentTime // calculate time left until expiration
+        console.log('time left', timeLeft)
+
+        this.tokenExpirationTimer = setTimeout(() => {
+          localStorage.removeItem('token')
+          this.isLoggedIn = false
+        }, timeLeft)
+      }
+    },
+    stopTokenExpirationTimer () {
+      clearTimeout(this.tokenExpirationTimer)
     },
     closeProfilePage () {
       this.profilePage = false
@@ -472,7 +507,7 @@ export default {
 
 .signup-btn-form:hover{
   box-shadow: inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff;
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .login-butn-form:hover {
@@ -630,6 +665,12 @@ input:focus {
   justify-content: center;
 }
 
+h5 {
+  font-size: 15px;
+  text-align: center;
+  color: rgb(148, 148, 148);
+}
+
 .form-submit span {
   cursor: pointer;
   background-color: #6798ff;
@@ -671,7 +712,7 @@ input:focus {
 
 .password-toggle-btn-two {
   position: absolute;
-  top: 75%;
+  top: 88%;
   right: 18px;
   transform: translateY(-50%);
   background: transparent;
@@ -683,6 +724,10 @@ input:focus {
 
 .icon {
   position: relative;
+}
+
+.upper {
+  top: 76%;
 }
 
 .password-toggle-icon {
@@ -709,6 +754,7 @@ input:focus {
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .profile-page form {
@@ -758,5 +804,12 @@ input:focus {
 
 .last {
   margin-top: 20px;
+}
+
+strong {
+  color: black;
+  font-weight: normal;
+  font-size: 18px;
+  user-select:auto;
 }
 </style>

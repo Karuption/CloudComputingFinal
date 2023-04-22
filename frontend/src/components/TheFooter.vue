@@ -2,7 +2,7 @@
   <div>
     <div v-if="showExtensions">
       <ExtensionViewer
-        :logged-in="loggedIn"
+        :logged-in="isLoggedIn"
         @toggle-extension-display="extensionsViewToggle"
         @toggle-canvas-input="$emit('toggle-canvas-input')"
       />
@@ -12,25 +12,25 @@
       class="footer-wrapper"
     >
       <div
-        :class="{ 'disabled': !loggedIn }"
-        @click="extensionsViewToggle()"
+        :class="{ 'disabled': !isLoggedIn }"
+        @click="isLoggedIn && extensionsViewToggle()"
       >
         <span
-          v-if="loggedIn"
+          v-if="isLoggedIn"
           class="material-symbols-outlined blue-circle tip right"
-          :data-tippy-content="'Extensions'"
-        >api</span>
+          data-tippy-content="Extensions"
+        >&#xf1b7;</span>
         <span
-          v-if="!loggedIn"
+          v-if="!isLoggedIn"
           class="material-symbols-outlined blue-circle tip right"
-          :data-tippy-content="'Login for Extensions'"
-        >api</span>
+          data-tippy-content="Login for Extensions"
+        >&#xf1b7;</span>
       </div>
       <div @click="$emit('toggle-form-input')">
         <span
           class="material-symbols-outlined blue-circle tip"
           data-tippy-content="Add New Task"
-        >add</span>
+        >&#xe145;</span>
       </div>
     </div>
     <div v-if="type==='form'">
@@ -46,7 +46,7 @@
             @click="$emit('toggle-form-input')"
           >
             <span class="material-symbols-outlined closer">
-              close
+              &#xe5cd;
             </span>
           </div>
           <label for="title">Title</label>
@@ -75,14 +75,14 @@
               <div
                 class="form-submit"
               >
-                <span class="material-symbols-outlined blue-circle">add</span>
+                <span class="material-symbols-outlined blue-circle">&#xe145;</span>
               </div>
             </button>
           </div>
         </form>
       </div>
       <div
-        v-if="canvasLogin===true && loggedIn===true"
+        v-if="canvasLogin===true && isLoggedIn===true"
         class="form-wrapper"
         @click.self="$emit('toggle-canvas-input')"
       >
@@ -94,7 +94,7 @@
             @click="$emit('toggle-canvas-input')"
           >
             <span class="material-symbols-outlined closer">
-              close
+              &#xe5cd;
             </span>
           </div>
           <label
@@ -118,7 +118,7 @@
           <div class="submit-section subb">
             <button type="submit">
               <div class="form-submit">
-                <span class="material-symbols-outlined blue-circle">add</span>
+                <span class="material-symbols-outlined blue-circle">&#xe145;</span>
               </div>
             </button>
           </div>
@@ -129,7 +129,7 @@
 </template>
 
 <script>
-import ExtensionViewer from '../UI/ExtensionsViewer.vue'
+import ExtensionViewer from './ExtensionsViewer.vue'
 
 export default {
   name: 'TheFooter',
@@ -149,7 +149,7 @@ export default {
       type: String,
       required: true
     },
-    loggedIn: {
+    isLoggedIn: {
       type: Boolean,
       default: false
     }
@@ -188,7 +188,7 @@ export default {
       }
     },
     extensionsViewToggle () {
-      if (this.loggedIn) {
+      if (this.isLoggedIn) {
         this.showExtensions = !this.showExtensions
       }
     }

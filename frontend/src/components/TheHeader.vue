@@ -27,7 +27,7 @@
     <span
       class="material-symbols-outlined toggle-box"
     >
-      sort
+      &#xe164;
     </span>
     <h1 v-if="todoList">
       Todo

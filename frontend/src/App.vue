@@ -4,17 +4,13 @@
       @user-logged-in="toggleLogin"
       @user-logged-out="toggleLogin"
     />
-    <TodoList :logged-in="loggedIn" />
+    <TodoList :is-logged-in="isLoggedIn" />
   </div>
 </template>
 
 <script>
 import TodoList from './components/TodoList.vue'
-import UserLogin from './components/UI/UserLogin.vue'
-
-// decode the username from the token saved in local storage and set that to the username data on mount
-// format the links coming from canvas api tasks
-// make that extension page horizontally scrollable if it gets large enough
+import UserLogin from './components/UserLogin.vue'
 
 export default {
   components: {
@@ -23,12 +19,12 @@ export default {
   },
   data () {
     return {
-      loggedIn: false
+      isLoggedIn: false
     }
   },
   methods: {
     toggleLogin () {
-      this.loggedIn = !this.loggedIn
+      this.isLoggedIn = !this.isLoggedIn
     }
   }
 }
@@ -45,6 +41,8 @@ body {
 body, html {
   margin: 0;
   padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 * {

@@ -9,7 +9,11 @@
         @show-todo="showTodo"
         @show-completed="showCompleted"
       />
-      <EmptyStateDisplay :tasks="tasks" />
+      <LoadingSpinner v-if="isLoading" />
+      <EmptyStateDisplay
+        v-else
+        :tasks="tasks"
+      />
       <div v-if="todoList">
         <div
           class="content-wrapper"
@@ -28,7 +32,7 @@
           />
         </div>
         <TheFooter
-          :logged-in="loggedIn"
+          :is-logged-in="isLoggedIn"
           type="buttons"
           :add-item="addItem"
           :canvas-login="canvasLogin"
@@ -56,7 +60,7 @@
     </div>
     <TheFooter
       type="form"
-      :logged-in="loggedIn"
+      :is-logged-in="isLoggedIn"
       :add-item="addItem"
       :canvas-login="canvasLogin"
       @toggle-form-input="toggleFormInput"
@@ -75,20 +79,22 @@ import axios from 'axios'
 import tippy from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 
-import TheHeader from './UI/TheHeader.vue'
-import EmptyStateDisplay from './UI/EmptyStateDisplay.vue'
+import TheHeader from './TheHeader.vue'
+import EmptyStateDisplay from './EmptyStateDisplay.vue'
+import LoadingSpinner from './LoadingSpinner.vue'
 import TodoItem from './TodoItem.vue'
-import TheFooter from './UI/TheFooter.vue'
+import TheFooter from './TheFooter.vue'
 
 export default {
   components: {
     TheHeader,
     EmptyStateDisplay,
+    LoadingSpinner,
     TodoItem,
     TheFooter
   },
   props: {
-    loggedIn: {
+    isLoggedIn: {
       type: Boolean,
       default: false
     }
@@ -100,20 +106,21 @@ export default {
         description: '',
         dueDate: ''
       },
-      tasks: [],
-      tabs: true,
-      todoList: true,
-      completedList: false,
-      addItem: false,
-      fullDisplay: [],
-      isChecked: [],
-      canvasLogin: false,
       canvasUrl: '',
-      accessToken: ''
+      accessToken: '',
+      tasks: [],
+      isChecked: [],
+      fullDisplay: [],
+      tabs: true,
+      addItem: false,
+      todoList: true,
+      isLoading: true,
+      canvasLogin: false,
+      completedList: false
     }
   },
   watch: {
-    loggedIn: function (newVal, oldVal) {
+    isLoggedIn: function (newVal, oldVal) {
       this.loadBackendData()
     }
   },
@@ -126,6 +133,7 @@ export default {
   },
   methods: {
     loadBackendData () {
+      this.isLoading = true
       axios.get('http://localhost:5000/api/ToDoTask', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -136,6 +144,9 @@ export default {
         })
         .catch(error => {
           console.log(error)
+        })
+        .finally(() => {
+          this.isLoading = false
         })
     },
     submitForm () {
@@ -159,7 +170,7 @@ export default {
       this.toggleFormInput()
     },
     async submitCanvasFormDetails (formData) {
-      if (this.loggedIn) {
+      if (this.isLoggedIn) {
         try {
           const response = await axios.post('http://localhost:5000/api/Authenticate/add-CanvasKey', {
             canvasUrl: formData.canvasUrl,
@@ -195,7 +206,7 @@ export default {
       task.isFavorite = !task.isFavorite
       const taskId = task.id
 
-      if (this.loggedIn) {
+      if (this.isLoggedIn) {
         axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -218,6 +229,7 @@ export default {
     },
     toggleCompletedTask (index) {
       this.isChecked[index] = !this.isChecked[index]
+      this.fullDisplay[index] = ''
       const task = this.tasks[index]
       task.isCompleted = !task.isCompleted
       const taskId = task.id
@@ -332,6 +344,7 @@ export default {
 
 .wrapper {
   position: relative;
+  height: calc(100vh - 60px);
 }
 
 </style>
