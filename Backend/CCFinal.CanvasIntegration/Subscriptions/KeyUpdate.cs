@@ -21,45 +21,47 @@ public class KeyUpdate : ICapSubscribe, IKeyUpdate {
     }
 
     [CapSubscribe("Integration.Canvas")]
-    public async Task UpdateApiKey(IntegrationCanvas? model, CancellationToken cancellationToken) {
+    public async Task UpdateApiKey(IntegrationCanvas? model, CancellationToken cancellationToken = new()) {
         if (model is null) {
             _logger.LogDebug("Null model");
             return;
         }
 
-        var result = await _dbContext.Information.FirstOrDefaultAsync(
-            x => x.UserID == Guid.Parse(model!.UserId), cancellationToken);
+        try {
+            var result = await _dbContext.Information.FirstOrDefaultAsync(
+                x => x.UserID == Guid.Parse(model!.UserId), cancellationToken);
 
-        var basePath = new string(model.CanvasUrl).Trim();
-        if (!basePath.EndsWith('/'))
-            basePath = basePath + "/";
-        if (!basePath.StartsWith("http"))
-            basePath = "http://" + basePath;
+            var basePath = new string(model.CanvasUrl).Trim();
+            if (!basePath.EndsWith('/'))
+                basePath = basePath[..^1];
+            if (!basePath.StartsWith("http"))
+                basePath = "https://" + basePath;
 
-        if (result is null) {
-            await _dbContext.Information.AddAsync(new UserInformation {
-                UserID = Guid.Parse(model.UserId),
-                Token = model.Key,
-                BaseUrl = basePath,
-                LastRunDateTime = new DateTime(),
-                LastCanvasUpdateDateTime =
-                    DateTime.UtcNow.Subtract(
-                        TimeSpan.FromDays(defaultInitSearchDays)) //only start with a search of default days history
-            }, cancellationToken);
+            if (result is null) {
+                await _dbContext.Information.AddAsync(new UserInformation {
+                    UserID = Guid.Parse(model.UserId),
+                    Token = model.Key,
+                    BaseUrl = basePath,
+                    LastRunDateTime = new DateTime(),
+                    LastCanvasUpdateDateTime =
+                        DateTime.UtcNow.Subtract(
+                            TimeSpan.FromDays(defaultInitSearchDays)) //only start with a search of default days history
+                }, cancellationToken);
 
+                _logger.LogInformation(
+                    $"Processed Message and created for User: {model.UserId}");
+            } else {
+                result.Token = model.Key;
+                result.BaseUrl = basePath;
+                result.LastRunDateTime = new DateTime();
+                result.LastRunDateTime = DateTime.UtcNow.Subtract(TimeSpan.FromDays(defaultInitSearchDays));
+            }
             await _dbContext.SaveChangesAsync(cancellationToken);
-
-            _logger.LogInformation(
-                $"Processed Message and created for User: {model.UserId}");
-
-            return;
+            _logger.LogInformation($"Processed Message for User: {model.UserId}");
         }
-
-
-        result.Token = model.Key;
-        result.BaseUrl = basePath;
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation($"Processed Message for User: {model.UserId}");
+        catch (Exception e) {
+            _logger.LogInformation($"Unable to process key for {model.UserId}. Key = {model.Key}");
+        }
     }
 }
 

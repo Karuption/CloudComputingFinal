@@ -40,6 +40,7 @@ var host = Host.CreateDefaultBuilder(args)
         });
         services.AddTransient<ICanvasService, CanvasService>();
         services.AddHostedService<Worker>();
+        services.AddHostedService<Cleanup>();
     })
     .Build();
 

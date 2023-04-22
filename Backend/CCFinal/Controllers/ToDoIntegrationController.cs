@@ -23,9 +23,6 @@ public class ToDoIntegrationController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ToDoTaskIntegrationDto>>> GetToDoTask() {
-        if (_context.ToDoTask == null)
-            return NotFound();
-
         return _context.ToDoTask.Select(x => _todoMapper.TodoTaskModelToDto(x)).ToList();
     }
 
@@ -34,8 +31,6 @@ public class ToDoIntegrationController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<ToDoTaskIntegrationDto>> GetToDoTask(string id) {
-        if (_context.ToDoTask == null)
-            return NotFound();
         var toDoTask = await _context.ToDoTask.FirstOrDefaultAsync(x => x.IntegrationId == id);
 
         if (toDoTask == null)
@@ -65,7 +60,7 @@ public class ToDoIntegrationController : ControllerBase {
             return NotFound();
 
         //
-        if (task.Updated >= toDoTaskDTO.Updated)
+        if (task.Updated > toDoTaskDTO.Updated)
             return BadRequest("The database object is more up to date than the sent object");
 
         toDoTaskDTO.Id = task.Id;
@@ -96,8 +91,6 @@ public class ToDoIntegrationController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> PostToDoTask(ToDoTaskIntegrationDto toDoTaskDto) {
-        if (_context.ToDoTask == null)
-            return Problem("Entity set 'CCFinalContext.ToDoTask'  is null.");
         if (toDoTaskDto.UserID == default || string.IsNullOrWhiteSpace(toDoTaskDto.IntegrationId))
             return BadRequest("Id fields IntegrationId and UserID cannot be null or empty");
 
@@ -123,14 +116,14 @@ public class ToDoIntegrationController : ControllerBase {
         try {
             return await PutToDoTask(toDoTaskDto.IntegrationId, toDoTaskDto);
         }
-        catch (Exception ex) { }
-
-        return StatusCode(StatusCodes.Status500InternalServerError,
-            new Response {
-                Status = "Error",
-                Message =
-                    $"Unable to Upsert the task for User ID: {toDoTaskDto.UserID} and Integration ID: {toDoTaskDto.IntegrationId}"
-            });
+        catch (Exception ex) {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new Response {
+                    Status = "Error",
+                    Message =
+                        $"Unable to Upsert the task for User ID: {toDoTaskDto.UserID} and Integration ID: {toDoTaskDto.IntegrationId}"
+                });
+        }
     }
 
     // DELETE: api/ToDoTask/5
@@ -138,9 +131,6 @@ public class ToDoIntegrationController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteToDoTask(string id, Guid userId) {
-        if (_context.ToDoTask == null)
-            return NotFound();
-
         var toDoTask = await _context.ToDoTask.FirstOrDefaultAsync(x => x.IntegrationId == id && x.UserID == userId);
 
         if (toDoTask == null)

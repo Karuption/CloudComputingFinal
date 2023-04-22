@@ -54,8 +54,10 @@ public class CanvasService : ICanvasService {
     }
 
     public async Task ProcessUser(UserInformation userInfo, CancellationToken stoppingToken = default) {
-        var user = await _dbContext.Information.FirstOrDefaultAsync(x => x.UserID == userInfo.UserID);
+        if (string.IsNullOrWhiteSpace(userInfo.Token))
+            return;
 
+        var user = await LockRow(userInfo, userInfo, stoppingToken);
         if (user is null)
             return;
 
@@ -66,8 +68,8 @@ public class CanvasService : ICanvasService {
 
         var response = await _client.SendAsync(request, stoppingToken);
 
-        // Handling API request
-        if (!response.IsSuccessStatusCode)
+        // Handling API request failure
+        if (!response.IsSuccessStatusCode) {
             _logger.LogDebug(
                 $"""
                             User ID: {user.UserID} 
@@ -75,50 +77,86 @@ public class CanvasService : ICanvasService {
                             Reason: {response.ReasonPhrase ?? ""} 
                             Content: {await response.Content.ReadAsStringAsync(stoppingToken)}
                         """);
-
-        Course[] courses = Array.Empty<Course>();
-        if (response.IsSuccessStatusCode) {
-            var data = await response.Content.ReadFromJsonAsync<Data>((JsonSerializerOptions?)default, stoppingToken);
-            if (data is null)
-                _logger.LogDebug("Unable to unpack request");
-            courses = data.data.allCourses ?? Array.Empty<Course>();
-            user.LastRunDateTime = DateTime.UtcNow;
+            return;
         }
 
-        // Logging updated courses
-        var updateTime = user.LastCanvasUpdateDateTime;
-        foreach (var course in courses) {
-            if (course.UpdatedAt > updateTime)
-                foreach (var assignment in course.AssignmentsConnection.Nodes) {
-                    if (assignment.UpdatedAt > updateTime) {
-                        await _capPublisher.PublishAsync("IntegrationTaskUpsert",
-                            new ToDoTaskIntegrationDto(default,
-                                assignment.Id,
-                                assignment.CreatedAt,
-                                assignment.DueAt,
-                                user.UserID,
-                                assignment.SubmissionTypes.ParseTaskType(),
-                                false,
-                                false,
-                                $"{course.Name} : {assignment.Name}",
-                                user.BaseUrl + assignment.HtmlUrl.PathAndQuery,
-                                assignment.UpdatedAt),
-                            new Dictionary<string, string?> { { KafkaHeaders.KafkaKey, assignment.Id } },
-                            stoppingToken); //Key is the Integration ID
+        var data = await response.Content.ReadFromJsonAsync<Data>((JsonSerializerOptions?)default, stoppingToken);
+        if (data is null) {
+            _logger.LogDebug("Unable to unpack request");
+            return;
+        }
 
-                        user!.LastCanvasUpdateDateTime =
-                            userInfo.LastCanvasUpdateDateTime.MaxDateTime(assignment.UpdatedAt);
-                        _logger.LogInformation($"""
+        Course[] courses = data?.data?.allCourses ?? Array.Empty<Course>();
+        user.LastRunDateTime = DateTime.UtcNow;
+
+        // publishing updated courses wrapped in a transaction for event consistency
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(_capPublisher, true);
+        try {
+            var updateTime = user.LastCanvasUpdateDateTime;
+            foreach (var course in courses) {
+                if (course.UpdatedAt > updateTime)
+                    foreach (var assignment in course.AssignmentsConnection.Nodes) {
+                        if (assignment.UpdatedAt > updateTime) {
+                            await _capPublisher.PublishAsync("IntegrationTaskUpsert",
+                                new ToDoTaskIntegrationDto(default,
+                                    assignment.Id,
+                                    assignment.CreatedAt,
+                                    assignment.DueAt,
+                                    user.UserID,
+                                    assignment.SubmissionTypes.ParseTaskType(),
+                                    false,
+                                    false,
+                                    $"{course.Name} : {assignment.Name}",
+                                    user.BaseUrl + assignment.HtmlUrl.PathAndQuery,
+                                    assignment.UpdatedAt),
+                                new Dictionary<string, string?>
+                                    { { KafkaHeaders.KafkaKey, assignment.Id + user.UserID } },
+                                stoppingToken); //Key is the Integration ID + user id 
+
+                            user!.LastCanvasUpdateDateTime =
+                                userInfo.LastCanvasUpdateDateTime.MaxDateTime(assignment.UpdatedAt);
+                            _logger.LogInformation($"""
                         Updated Course for user {user.UserID} Name: {course.Name}
                             Assignment Name: {assignment.Name}
                             Assignment Created: {assignment.CreatedAt}
                             Assignment Updated: {assignment.UpdatedAt}
                             Assignment Due: {assignment.DueAt}
                         """);
+                        }
                     }
-                }
+            }
+
+            //release naive lock
+            user.LockId = null;
+            user.LockTime = null;
 
             await _dbContext.SaveChangesAsync(stoppingToken);
+            await transaction.CommitAsync(stoppingToken);
         }
+        catch (Exception ex) {
+            await transaction.RollbackAsync(stoppingToken);
+            user.LockId = null;
+            user.LockTime = null;
+            await _dbContext.SaveChangesAsync(stoppingToken);
+        }
+    }
+
+    private async Task<UserInformation?> LockRow(UserInformation userInfo, UserInformation user,
+        CancellationToken stoppingToken = new()) {
+        // simple lock to allow for concurrency
+        // double processing is not an issue, just trying to save round trips to the slow external API 
+        user = await _dbContext.Information.FirstOrDefaultAsync(x => x.UserID == userInfo.UserID &&
+                                                                     x.LockTime == null &&
+                                                                     x.Token != "", stoppingToken);
+        if (user is null)
+            return null;
+
+        var lockId = new Guid();
+        user.LockId = lockId;
+        user.LockTime = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(stoppingToken);
+
+        user = await _dbContext.Information.FirstOrDefaultAsync(x => x.LockId == lockId, stoppingToken);
+        return user;
     }
 }

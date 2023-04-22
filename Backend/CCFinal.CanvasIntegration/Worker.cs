@@ -17,7 +17,7 @@ public class Worker : BackgroundService {
         _logger.LogInformation("Worker Started");
 
         using var scope = _service.CreateScope();
-        List<Task> taskliList = new();
+        List<Task> taskList = new();
 
         var capBootstrap = scope.ServiceProvider.GetService<IBootstrapper>();
         if (capBootstrap is not null && !capBootstrap.IsStarted)
@@ -29,17 +29,13 @@ public class Worker : BackgroundService {
             if (canvasService is null)
                 _logger.LogInformation($"Cannot resolve {nameof(canvasService)}");
 
-            //Get User metadata
-            List<UserInformation> users = await canvasService.GetUsers();
-
-            // Process All Users that need updates in Parallel
-
+            List<UserInformation> users = await canvasService!.GetUsers();
             if (users.Count > 0)
                 foreach (var userInformation in users)
-                    taskliList.Add(canvasService.ProcessUser(userInformation, stoppingToken));
+                    taskList.Add(canvasService.ProcessUser(userInformation, stoppingToken));
 
-            await Task.WhenAll(taskliList);
-            taskliList.Clear();
+            await Task.WhenAll(taskList);
+            taskList.Clear();
 
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
         }
