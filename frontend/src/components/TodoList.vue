@@ -134,7 +134,7 @@ export default {
   methods: {
     loadBackendData () {
       this.isLoading = true
-      axios.get('http://localhost:5000/api/ToDoTask', {
+      axios.get(import.meta.env.VITE_API_KEY + '/api/ToDoTask', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -153,7 +153,7 @@ export default {
       if (!this.newTask.dueDate) {
         this.newTask.dueDate = null
       }
-      axios.post('http://localhost:5000/api/ToDoTask', this.newTask, {
+      axios.post(import.meta.env.VITE_API_KEY + '/api/ToDoTask', this.newTask, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -176,7 +176,7 @@ export default {
     async submitCanvasFormDetails (formData) {
       if (this.isLoggedIn) {
         try {
-          const response = await axios.post('http://localhost:5000/api/Authenticate/add-CanvasKey', {
+          const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/add-CanvasKey', {
             canvasUrl: formData.canvasUrl,
             accessToken: formData.accessToken
           }, {
@@ -193,7 +193,7 @@ export default {
     },
     removeTask (index) {
       const taskId = this.tasks[index].id
-      axios.delete(`http://localhost:5000/api/ToDoTask/${taskId}`, {
+      axios.delete(import.meta.env.VITE_API_KEY + `/api/ToDoTask/${taskId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -211,7 +211,7 @@ export default {
       const taskId = task.id
 
       if (this.isLoggedIn) {
-        axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task, {
+        axios.put(import.meta.env.VITE_API_KEY + `/api/ToDoTask/${taskId}`, task, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -237,7 +237,7 @@ export default {
       const task = this.tasks[index]
       task.isCompleted = !task.isCompleted
       const taskId = task.id
-      axios.put(`http://localhost:5000/api/ToDoTask/${taskId}`, task, {
+      axios.put(import.meta.env.VITE_API_KEY + `/api/ToDoTask/${taskId}`, task, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }

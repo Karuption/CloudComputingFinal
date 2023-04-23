@@ -9,7 +9,7 @@
 <style scoped>
 .spinner-wrapper {
   position: fixed;
-  top: -200px;
+  top: -100px;
   left: 0;
   right: 0;
   bottom: 0;

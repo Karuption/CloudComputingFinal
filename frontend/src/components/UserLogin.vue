@@ -304,7 +304,7 @@ export default {
       if (this.isLoggedIn) {
         if (this.username !== '' && this.password !== '') {
           try {
-            const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
+            const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/login', {
               username: this.username,
               password: this.password
             }, {
@@ -328,7 +328,7 @@ export default {
       } else {
         if (this.isLoggedIn) {
           try {
-            const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
+            const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/login', {
               username: this.username,
               password: this.password
             }, {
@@ -351,7 +351,7 @@ export default {
         } else {
           if (this.username !== '' && this.password !== '') {
             try {
-              const response = await axios.post('http://localhost:5000/api/Authenticate/login', {
+              const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/login', {
                 username: this.username,
                 password: this.password
               })
@@ -374,7 +374,7 @@ export default {
     async registrationHandler () {
       if (this.isLoggedIn) {
         try {
-          const response = await axios.post('http://localhost:5000/api/Authenticate/register', {
+          const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/register', {
             username: this.username,
             password: this.password
           }, {
@@ -389,7 +389,7 @@ export default {
         }
       } else {
         try {
-          const response = await axios.post('http://localhost:5000/api/Authenticate/register', {
+          const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/register', {
             username: this.username,
             password: this.password
           })
@@ -402,7 +402,7 @@ export default {
     },
     async changePasswordHandler () {
       try {
-        const response = await axios.post('http://localhost:5000/api/Authenticate/change-password', {
+        const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/change-password', {
           oldPassword: this.oldPassword,
           newPassword: this.newPassword
         }, {
