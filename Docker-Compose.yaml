@@ -66,6 +66,20 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+  frontend:
+    image: frontendapi:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: FrontendAPI
+    ports:
+      - "81:80"
+    networks:
+      - db
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_KEY=http://backendapi:80
 
 networks:
   db:
