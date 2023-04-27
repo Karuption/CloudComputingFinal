@@ -66,16 +66,17 @@ builder.Services.AddCors(option => {
     option.DefaultPolicyName = "final";
     option.AddPolicy("final", policy => {
         policy.AllowAnyOrigin()
-            .AllowAnyHeader()
             .AllowAnyMethod()
+            .AllowAnyHeader()
             .SetIsOriginAllowed(host => true)
-            .SetIsOriginAllowedToAllowWildcardSubdomains()
-            .Build();
+//            .SetIsOriginAllowedToAllowWildcardSubdomains()
+            .SetPreflightMaxAge(TimeSpan.FromSeconds(90));
     });
 });
 
 builder.Services.AddCap(options => {
-    options.UseDashboard();
+    if (builder.Environment.IsDevelopment())
+        options.UseDashboard();
     options.UseEntityFramework<ApplicationDbContext>();
     options.UseKafka(builder.Configuration.GetSection("Kafka")["Servers"] ?? string.Empty);
 });

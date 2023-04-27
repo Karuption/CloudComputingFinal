@@ -1,16 +1,17 @@
 ﻿using CCFinal.Data;
 using CCFinal.Dtos;
 using CCFinal.Mappers;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace CCFinal.Controllers; 
+namespace CCFinal.Controllers;
 
-[Route("api/[controller]")]
+[EnableCors]
 [ApiController]
-public class ToDoTaskController : ControllerBase
-{
+[Route("api/[controller]")]
+public class ToDoTaskController : ControllerBase {
     private readonly CCFinalContext _context;
     private readonly ITodoMapper _todoMapper;
     private readonly ILogger<ToDoTaskController> _logger;

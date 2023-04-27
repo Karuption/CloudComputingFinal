@@ -21,4 +21,4 @@ RUN dotnet publish "CCFinal.csproj" -c Release -o /app/publish --no-restore #/p:
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "CCFinal.dll", "--urls", "http://*:80"]
+ENTRYPOINT ["dotnet", "CCFinal.dll", "--urls", "http://0.0.0.0:80"]
