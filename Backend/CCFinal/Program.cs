@@ -1,7 +1,9 @@
 using System.Text;
 using CCFinal.Data;
 using CCFinal.Mappers;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -81,6 +83,10 @@ builder.Services.AddCap(options => {
     options.UseKafka(builder.Configuration.GetSection("Kafka")["Servers"] ?? string.Empty);
 });
 
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>()
+    .AddDbContextCheck<CCFinalContext>();
+
 var app = builder.Build();
 
 app.UseCors("final");
@@ -94,6 +100,10 @@ app.Use((context, next) => {
 
     return next.Invoke();
 });
+
+app.UseHealthChecks("/healthcheck",
+    new HealthCheckOptions { ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse });
+
 
 // Force DB Migrations
 using(var scope = app.Services.CreateScope())
