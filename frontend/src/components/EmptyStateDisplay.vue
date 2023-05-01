@@ -39,7 +39,6 @@ export default {
   text-align: center;
   margin: 0px;
   position: relative;
-  z-index:1000;
   bottom: 70px;
   color: rgb(148, 148, 148);
 }
