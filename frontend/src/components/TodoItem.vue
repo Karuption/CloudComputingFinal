@@ -34,8 +34,9 @@
                 <strong>Description: </strong>
                 <span v-if="convertStringToLink(task.description).isLink">
                   <button
+                    v-if="convertStringToLink(task.description).isLink"
                     class="open-btn"
-                    @click="openLink(convertStringToLink(task.description).link)"
+                    @click="window.open(convertStringToLink(task.description).link)"
                   >
                     View Description
                   </button>
@@ -91,11 +92,13 @@
                 <strong>Description: </strong>
                 <span v-if="convertStringToLink(task.description).isLink">
                   <button
+                    v-if="convertStringToLink(task.description).isLink"
                     class="open-btn"
-                    @click="openLink(convertStringToLink(task.description).link)"
+                    @click="window.open(convertStringToLink(task.description).link)"
                   >
                     View Description
                   </button>
+
                 </span>
                 <span v-else>
                   {{ convertStringToLink(task.description).link }}
@@ -168,7 +171,7 @@ export default {
       return formattedTime
     },
     convertStringToLink (description) {
-      if (description.startsWith('https')) {
+      if (description.match(/^https?:\/\//i)) {
         return {
           isLink: true,
           link: description
@@ -178,11 +181,6 @@ export default {
           isLink: false,
           link: description
         }
-      }
-    },
-    openLink (url) {
-      if (typeof window !== 'undefined') {
-        window.open(url, '_blank')
       }
     }
   }

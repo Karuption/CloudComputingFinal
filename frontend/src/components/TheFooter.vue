@@ -87,7 +87,7 @@
         @click.self="$emit('toggle-canvas-input')"
       >
         <h4>Import Canvas Tasks</h4>
-        <p>This import should take around 5 minutes to complete</p>
+        <p>This import should take around 5 minutes to complete.</p>
         <form @submit.prevent="$emit('submit-canvas-form-details', { canvasUrl: canvasUrl, accessToken: accessToken }), resetUserInputs('canvas')">
           <div
             class="close-form"
