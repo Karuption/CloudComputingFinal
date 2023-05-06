@@ -75,8 +75,10 @@ builder.Logging.AddConsole();
 builder.Services.AddCors(option => {
     option.DefaultPolicyName = "final";
     option.AddPolicy("final", policy => {
-        policy.WithOrigins("http://*.localhost:80", "http://*.localhost:81", "http://*.localhost:5173",
-                "http://*.papederson.tech")
+        policy
+            //.AllowAnyOrigin()
+            .WithOrigins("http://*.localhost:80", "http://*.localhost:81", "http://*.localhost:5173",
+                "http://*.papederson.tech:443")
             .SetIsOriginAllowedToAllowWildcardSubdomains()
             .AllowAnyMethod()
             .AllowAnyHeader()

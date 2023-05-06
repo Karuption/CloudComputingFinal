@@ -137,6 +137,7 @@ export default {
       if (!this.newTask.dueDate) {
         this.newTask.dueDate = null
       }
+      this.isLoading = true
       axios.post(import.meta.env.VITE_API_KEY + '/api/ToDoTask', this.newTask, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -144,12 +145,15 @@ export default {
       }).then(response => { })
         .catch(error => {
           console.log(error)
+          this.isLoading = false
+          this.loadBackendData()
         })
       this.toggleFormInput()
     },
     async submitCanvasFormDetails(formData) {
       if (this.isLoggedIn) {
         try {
+          this.isLoading = true
           const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/add-CanvasKey', {
             canvasUrl: formData.canvasUrl,
             accessToken: formData.accessToken
@@ -161,11 +165,14 @@ export default {
           console.log(response)
           this.canvasLogin = !this.canvasLogin
         } catch (error) {
+          this.isLoading = false
           console.error(error)
+          this.loadBackendData()
         }
       }
     },
     removeTask(index) {
+      this.isLoading = true
       const taskId = this.tasks[index].id
       axios.delete(import.meta.env.VITE_API_KEY + `/api/ToDoTask/${taskId}`, {
         headers: {
@@ -173,13 +180,17 @@ export default {
         }
       }).then(response => { })
         .catch(error => {
+          this.isLoading = false
           console.log(error)
+          this.loadBackendData()
         })
     },
     toggleFavorite(index) {
       const task = this.tasks[index]
       task.isFavorite = !task.isFavorite
       const taskId = task.id
+
+      this.isLoading = true
 
       if (this.isLoggedIn) {
         axios.put(import.meta.env.VITE_API_KEY + `/api/ToDoTask/${taskId}`, task, {
@@ -189,6 +200,9 @@ export default {
         }).then(response => { })
           .catch(error => {
             console.log(error)
+            this.isLoading = false
+            task.isFavorite = !task.isFavorite
+            this.loadBackendData()
           })
       }
     },
@@ -201,18 +215,22 @@ export default {
       this.todoList = false
     },
     toggleCompletedTask(index) {
-      this.isChecked[index] = !this.isChecked[index]
+      // this.isChecked[index] = !this.isChecked[index]
       this.fullDisplay[index] = ''
       const task = this.tasks[index]
       task.isCompleted = !task.isCompleted
       const taskId = task.id
+      this.isLoading = true
       axios.put(import.meta.env.VITE_API_KEY + `/api/ToDoTask/${taskId}`, task, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       }).then(response => { })
         .catch(error => {
+          task.isCompleted = !task.isCompleted
+          this.isLoading = false
           console.log(error)
+          this.loadBackendData()
         })
     },
     showAllItemContents(index) {
