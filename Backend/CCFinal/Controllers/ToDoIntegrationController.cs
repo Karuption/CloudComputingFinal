@@ -3,6 +3,7 @@ using CCFinal.Dtos;
 using CCFinal.Mappers;
 using DotNetCore.CAP;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CCFinal.Controllers;
@@ -12,10 +13,13 @@ namespace CCFinal.Controllers;
 public class ToDoIntegrationController : ControllerBase {
     private readonly CCFinalContext _context;
     private readonly ITodoMapper _todoMapper;
+    private readonly IHubContext<UserNotification> _hubContext;
 
-    public ToDoIntegrationController(CCFinalContext context, ITodoMapper todoMapper) {
+    public ToDoIntegrationController(CCFinalContext context, ITodoMapper todoMapper,
+        IHubContext<UserNotification> hubContext) {
         _context = context;
         _todoMapper = todoMapper;
+        _hubContext = hubContext;
     }
 
     // GET: api/ToDoTask
@@ -72,6 +76,7 @@ public class ToDoIntegrationController : ControllerBase {
 
         try {
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.Group(task.UserID.ToString()).SendAsync("TaskChanged");
         }
         catch (DbUpdateConcurrencyException) {
             if (!ToDoTaskExists(task.Id))
@@ -108,7 +113,7 @@ public class ToDoIntegrationController : ControllerBase {
 
             _todoMapper.TodoTaskModelToDto(toDoTask, toDoTaskDto);
 
-
+            await _hubContext.Clients.Group(toDoTask.UserID.ToString()).SendAsync("TaskChanged");
             return CreatedAtAction("GetToDoTask", new { id = toDoTaskDto.Id }, toDoTaskDto);
         }
 
@@ -140,6 +145,7 @@ public class ToDoIntegrationController : ControllerBase {
         toDoTask.IsDeleted = true;
         toDoTask.Updated = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+        await _hubContext.Clients.Group(userId.ToString()).SendAsync("TaskChanged");
 
         return NoContent();
     }

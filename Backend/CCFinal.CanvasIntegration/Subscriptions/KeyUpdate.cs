@@ -54,7 +54,7 @@ public class KeyUpdate : ICapSubscribe, IKeyUpdate {
                 result.Token = model.Key;
                 result.BaseUrl = basePath;
                 result.LastRunDateTime = new DateTime();
-                result.LastRunDateTime = DateTime.UtcNow.Subtract(TimeSpan.FromDays(defaultInitSearchDays));
+                result.LastCanvasUpdateDateTime = DateTime.UtcNow.Subtract(TimeSpan.FromDays(defaultInitSearchDays));
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);

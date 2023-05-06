@@ -1,4 +1,5 @@
 using System.Text;
+using CCFinal;
 using CCFinal.Data;
 using CCFinal.Mappers;
 using HealthChecks.UI.Client;
@@ -36,8 +37,15 @@ builder.Services.AddAuthentication(options => {
     .AddJwtBearer(options => {
         options.SaveToken = true;
         options.RequireHttpsMetadata = false;
+        options.Events = new JwtBearerEvents {
+            OnMessageReceived = ctx => {
+                if (string.IsNullOrWhiteSpace(ctx.Token))
+                    ctx.Token = ctx.Request.Query["access_token"];
+                return Task.CompletedTask;
+            }
+        };
         options.TokenValidationParameters = new TokenValidationParameters {
-            ValidateIssuer = true,
+            ValidateIssuer = false,
             ValidateAudience = false,
             //ValidateAudience = true,
             //ValidAudience = configuration["JWT:ValidAudience"],
@@ -67,18 +75,19 @@ builder.Logging.AddConsole();
 builder.Services.AddCors(option => {
     option.DefaultPolicyName = "final";
     option.AddPolicy("final", policy => {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://*.localhost:80", "http://*.localhost:81", "http://*.localhost:5173",
+                "http://*.papederson.tech")
+            .SetIsOriginAllowedToAllowWildcardSubdomains()
             .AllowAnyMethod()
             .AllowAnyHeader()
             .SetIsOriginAllowed(host => true)
-//            .SetIsOriginAllowedToAllowWildcardSubdomains()
+            .AllowCredentials()
             .SetPreflightMaxAge(TimeSpan.FromSeconds(90));
     });
 });
 
 builder.Services.AddCap(options => {
-    if (builder.Environment.IsDevelopment())
-        options.UseDashboard();
+    options.UseDashboard();
     options.UseEntityFramework<ApplicationDbContext>();
     options.UseKafka(builder.Configuration.GetSection("Kafka")["Servers"] ?? string.Empty);
 });
@@ -87,13 +96,15 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>()
     .AddDbContextCheck<CCFinalContext>();
 
+builder.Services.AddSignalR(opt => { opt.EnableDetailedErrors = true; });
+
 var app = builder.Build();
 
 app.UseCors("final");
 
 app.Use((context, next) => {
     if (string.IsNullOrWhiteSpace(context.Response.Headers.AccessControlAllowOrigin)) {
-        context.Response.Headers.AccessControlAllowOrigin = "*";
+        context.Response.Headers.AccessControlAllowOrigin = context.Request.Protocol + context.Request.Host;
         context.Response.Headers.AccessControlAllowMethods = "*";
         context.Response.Headers.AccessControlAllowHeaders = "*";
     }
@@ -134,6 +145,8 @@ app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<UserNotification>("/UserNotification", opt => { opt.CloseOnAuthenticationExpiration = true; });
 
 app.MapControllers();
 

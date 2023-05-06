@@ -1,76 +1,29 @@
 <template>
   <div class="wrapper">
     <div class="list-wrapper">
-      <TheHeader
-        :tabs="tabs"
-        :tasks="tasks"
-        :todo-list="todoList"
-        :completed-list="completedList"
-        @show-todo="showTodo"
-        @show-completed="showCompleted"
-      />
+      <TheHeader :tabs="tabs" :tasks="tasks" :todo-list="todoList" :completed-list="completedList" @show-todo="showTodo"
+        @show-completed="showCompleted" />
       <LoadingSpinner v-if="isLoading" />
-      <EmptyStateDisplay
-        v-else
-        :tasks="tasks"
-      />
+      <EmptyStateDisplay v-else :tasks="tasks" />
       <div v-if="todoList">
-        <div
-          class="content-wrapper"
-        >
-          <TodoItem
-            type="todo"
-            :tasks="tasks"
-            :is-checked="isChecked"
-            :full-display="fullDisplay"
-            @toggle-completed-task="toggleCompletedTask"
-            @set-checked="setIsChecked"
-            @remove-checked="removeIsChecked"
-            @remove-task="removeTask"
-            @toggle-favorite="toggleFavorite"
-            @show-all-item-contents="showAllItemContents"
-          />
+        <div class="content-wrapper">
+          <TodoItem type="todo" :tasks="tasks" :is-checked="isChecked" :full-display="fullDisplay"
+            @toggle-completed-task="toggleCompletedTask" @set-checked="setIsChecked" @remove-checked="removeIsChecked"
+            @remove-task="removeTask" @toggle-favorite="toggleFavorite" @show-all-item-contents="showAllItemContents" />
         </div>
-        <TheFooter
-          :is-logged-in="isLoggedIn"
-          type="buttons"
-          :add-item="addItem"
-          :canvas-login="canvasLogin"
-          @toggle-canvas-input="toggleCanvasInput"
-          @toggle-form-input="toggleFormInput"
-        />
+        <TheFooter :is-logged-in="isLoggedIn" type="buttons" :add-item="addItem" :canvas-login="canvasLogin"
+          @toggle-canvas-input="toggleCanvasInput" @toggle-form-input="toggleFormInput" />
       </div>
-      <div
-        v-else
-        class="completed-wrapper"
-      >
-        <TodoItem
-          type="completed"
-          :tasks="tasks"
-          :is-checked="isChecked"
-          :full-display="fullDisplay"
-          @toggle-completed-task="toggleCompletedTask"
-          @set-checked="setIsChecked"
-          @remove-checked="removeIsChecked"
-          @remove-task="removeTask"
-          @toggle-favorite="toggleFavorite"
-          @show-all-item-contents="showAllItemContents"
-        />
+      <div v-else class="completed-wrapper">
+        <TodoItem type="completed" :tasks="tasks" :is-checked="isChecked" :full-display="fullDisplay"
+          @toggle-completed-task="toggleCompletedTask" @set-checked="setIsChecked" @remove-checked="removeIsChecked"
+          @remove-task="removeTask" @toggle-favorite="toggleFavorite" @show-all-item-contents="showAllItemContents" />
       </div>
     </div>
-    <TheFooter
-      type="form"
-      :is-logged-in="isLoggedIn"
-      :add-item="addItem"
-      :canvas-login="canvasLogin"
-      @toggle-form-input="toggleFormInput"
-      @submit-canvas-form-details="submitCanvasFormDetails"
-      @toggle-canvas-input="toggleCanvasInput"
-      @submit-form="submitForm"
-      @update-title="updateTitle"
-      @update-description="updateDescription"
-      @update-due-date="updateDueDate"
-    />
+    <TheFooter type="form" :is-logged-in="isLoggedIn" :add-item="addItem" :canvas-login="canvasLogin"
+      @toggle-form-input="toggleFormInput" @submit-canvas-form-details="submitCanvasFormDetails"
+      @toggle-canvas-input="toggleCanvasInput" @submit-form="submitForm" @update-title="updateTitle"
+      @update-description="updateDescription" @update-due-date="updateDueDate" />
   </div>
 </template>
 
@@ -84,6 +37,7 @@ import EmptyStateDisplay from './EmptyStateDisplay.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import TodoItem from './TodoItem.vue'
 import TheFooter from './TheFooter.vue'
+import { useSignalR } from '@dreamonkey/vue-signalr'
 
 export default {
   components: {
@@ -99,7 +53,14 @@ export default {
       default: false
     }
   },
-  data  () {
+  setup() {
+    const signalr = useSignalR()
+
+    signalr.invoke('Register').catch(err => {
+      console.error(err)
+    })
+  },
+  data() {
     return {
       newTask: {
         title: '',
@@ -120,28 +81,51 @@ export default {
     }
   },
   watch: {
-    isLoggedIn: function (newVal, oldVal) {
+    isLoggedIn: async function (newVal, oldVal) {
       this.loadBackendData()
+      const signalr = useSignalR()
+
+      if (oldVal === false && newVal === true) {
+        await signalr.invoke('Unregister').catch(err => {
+          console.error(err)
+        })
+      }
+
+      await signalr.invoke('Register').catch(err => {
+        console.error(err)
+      })
     }
   },
-  updated () {
+  updated() {
     this.loadTippySettings()
   },
-  mounted () {
+  unmounted() {
+    const signalR = useSignalR()
+    signalR.off('TaskChanged')
+    signalR.invoke('Unregister').catch(err => {
+      console.error(err)
+    })
+  },
+  mounted() {
     this.loadBackendData()
     this.loadTippySettings()
+    const signalR = useSignalR()
+    signalR.on('TaskChanged', () => {
+      console.log('TaskChanged')
+      this.loadBackendData()
+    })
   },
   methods: {
-    loadBackendData () {
+    loadBackendData() {
+      console.log('loading data')
       this.isLoading = true
       axios.get(import.meta.env.VITE_API_KEY + '/api/ToDoTask', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
+      }).then(response => {
+        this.tasks = response.data
       })
-        .then(response => {
-          this.tasks = response.data
-        })
         .catch(error => {
           console.log(error)
         })
@@ -149,7 +133,7 @@ export default {
           this.isLoading = false
         })
     },
-    submitForm () {
+    submitForm() {
       if (!this.newTask.dueDate) {
         this.newTask.dueDate = null
       }
@@ -157,23 +141,13 @@ export default {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
-      })
-        .then(response => {
-          console.log(response.data)
-          this.tasks.push(response.data)
-          // Reset form fields
-          this.newTask = {
-            title: '',
-            description: '',
-            dueDate: ''
-          }
-        })
+      }).then(response => { })
         .catch(error => {
           console.log(error)
         })
       this.toggleFormInput()
     },
-    async submitCanvasFormDetails (formData) {
+    async submitCanvasFormDetails(formData) {
       if (this.isLoggedIn) {
         try {
           const response = await axios.post(import.meta.env.VITE_API_KEY + '/api/Authenticate/add-CanvasKey', {
@@ -191,21 +165,18 @@ export default {
         }
       }
     },
-    removeTask (index) {
+    removeTask(index) {
       const taskId = this.tasks[index].id
       axios.delete(import.meta.env.VITE_API_KEY + `/api/ToDoTask/${taskId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
-      })
-        .then(response => {
-          this.tasks.splice(index, 1)
-        })
+      }).then(response => { })
         .catch(error => {
           console.log(error)
         })
     },
-    toggleFavorite (index) {
+    toggleFavorite(index) {
       const task = this.tasks[index]
       task.isFavorite = !task.isFavorite
       const taskId = task.id
@@ -215,23 +186,21 @@ export default {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
-        })
-          .then(response => {
-          })
+        }).then(response => { })
           .catch(error => {
             console.log(error)
           })
       }
     },
-    showTodo () {
+    showTodo() {
       this.todoList = true
       this.completedList = false
     },
-    showCompleted () {
+    showCompleted() {
       this.completedList = true
       this.todoList = false
     },
-    toggleCompletedTask (index) {
+    toggleCompletedTask(index) {
       this.isChecked[index] = !this.isChecked[index]
       this.fullDisplay[index] = ''
       const task = this.tasks[index]
@@ -241,46 +210,44 @@ export default {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
-      })
-        .then(response => {
-        })
+      }).then(response => { })
         .catch(error => {
           console.log(error)
         })
     },
-    showAllItemContents (index) {
+    showAllItemContents(index) {
       if (this.fullDisplay[index] === true) {
         this.fullDisplay[index] = ''
       } else {
         this.fullDisplay[index] = true
       }
     },
-    toggleFormInput () {
+    toggleFormInput() {
       this.addItem = !this.addItem
     },
-    toggleCanvasInput () {
+    toggleCanvasInput() {
       this.canvasLogin = !this.canvasLogin
     },
-    loadTippySettings () {
+    loadTippySettings() {
       tippy('.tip', {
         theme: 'custom',
         arrow: true,
         placement: 'top'
       })
     },
-    updateTitle (value) {
+    updateTitle(value) {
       this.newTask.title = value
     },
-    updateDescription (value) {
+    updateDescription(value) {
       this.newTask.description = value
     },
-    updateDueDate (value) {
+    updateDueDate(value) {
       this.newTask.dueDate = value
     },
-    setIsChecked (index) {
+    setIsChecked(index) {
       this.isChecked[index] = true
     },
-    removeIsChecked (index) {
+    removeIsChecked(index) {
       this.isChecked[index] = false
     }
   }
@@ -288,7 +255,6 @@ export default {
 </script>
 
 <style scoped>
-
 .list-wrapper {
   display: flex;
   flex-direction: column;
@@ -307,7 +273,7 @@ export default {
   min-height: 485px;
   max-height: 300px;
   overflow-y: scroll;
-  position:relative;
+  position: relative;
   margin: 20px;
 }
 
@@ -315,7 +281,7 @@ export default {
   min-height: 535px;
   max-height: 300px;
   overflow-y: scroll;
-  position:relative;
+  position: relative;
   margin: 20px;
   margin-bottom: 100px;
 }
@@ -350,5 +316,4 @@ export default {
   position: relative;
   height: calc(100vh - 60px);
 }
-
 </style>

@@ -37,7 +37,7 @@ public class Worker : BackgroundService {
             await Task.WhenAll(taskList);
             taskList.Clear();
 
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
 
 

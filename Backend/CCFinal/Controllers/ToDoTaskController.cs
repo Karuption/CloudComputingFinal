@@ -4,6 +4,7 @@ using CCFinal.Mappers;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CCFinal.Controllers;
@@ -17,14 +18,16 @@ public class ToDoTaskController : ControllerBase {
     private readonly ILogger<ToDoTaskController> _logger;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IHttpContextAccessor _ca;
+    private readonly IHubContext<UserNotification> _hubContext;
 
     public ToDoTaskController(CCFinalContext context, ITodoMapper todoMapper, ILogger<ToDoTaskController> logger,
-        UserManager<IdentityUser> userManager, IHttpContextAccessor ca) {
+        UserManager<IdentityUser> userManager, IHttpContextAccessor ca, IHubContext<UserNotification> hubContext) {
         _context = context;
         _todoMapper = todoMapper;
         _logger = logger;
         _userManager = userManager;
         _ca = ca;
+        _hubContext = hubContext;
     }
 
     // GET: api/ToDoTask
@@ -132,6 +135,10 @@ public class ToDoTaskController : ControllerBase {
         // Save changes and return
         try {
             await _context.SaveChangesAsync();
+            if (dbTask.UserID != default)
+                await _hubContext.Clients.Group(dbTask.UserID.ToString()).SendAsync("TaskChanged");
+            else
+                await _hubContext.Clients.Group("").SendAsync("TaskChanged");
         }
         catch (Exception ex) {
             if (!ToDoTaskExists(id)) {
@@ -164,7 +171,7 @@ public class ToDoTaskController : ControllerBase {
 
         // Set UserId
         if (_ca?.HttpContext?.User?.Identity?.IsAuthenticated ?? false) {
-            var user = await _userManager.FindByNameAsync(_ca!.HttpContext!.User.Identity!.Name!);
+            var user = await _userManager.FindByNameAsync(_ca.HttpContext!.User.Identity!.Name!);
             if (user is null)
                 return BadRequest();
             toDoTask.UserID = Guid.Parse(user.Id);
@@ -180,6 +187,11 @@ public class ToDoTaskController : ControllerBase {
 
         // Convert saved item to DTO 
         var toDoTaskReturn = _todoMapper.TodoTaskToDto(toDoTask);
+        if (toDoTask.UserID != default)
+            await _hubContext.Clients.Group(toDoTask.UserID.ToString()).SendAsync("TaskChanged");
+        else
+            await _hubContext.Clients.Group("").SendAsync("TaskChanged");
+
         return CreatedAtAction("GetToDoTask", new { id = toDoTaskReturn.Id }, toDoTaskReturn);
     }
 
@@ -209,6 +221,11 @@ public class ToDoTaskController : ControllerBase {
         if (!string.IsNullOrWhiteSpace(toDoTask.IntegrationId)) {
             toDoTask.IsDeleted = true;
             await _context.SaveChangesAsync();
+            if (toDoTask.UserID != default)
+                await _hubContext.Clients.Group(toDoTask.UserID.ToString()).SendAsync("TaskChanged");
+            else
+                await _hubContext.Clients.Group("").SendAsync("TaskChanged");
+
             return Ok();
         }
 
@@ -217,6 +234,10 @@ public class ToDoTaskController : ControllerBase {
 
         try {
             await _context.SaveChangesAsync();
+            if (toDoTask.UserID != default)
+                await _hubContext.Clients.Group(toDoTask.UserID.ToString()).SendAsync("TaskChanged");
+            else
+                await _hubContext.Clients.Group("").SendAsync("TaskChanged");
         }
         catch (Exception ex) {
             _logger.LogDebug(ex, $"Unable to remove object {toDoTask?.Id}");
